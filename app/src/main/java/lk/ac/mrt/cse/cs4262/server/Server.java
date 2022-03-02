@@ -1,14 +1,19 @@
 package lk.ac.mrt.cse.cs4262.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
+import lk.ac.mrt.cse.cs4262.server.client.Client;
+import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 
 public class Server {
     
     private ServerSocket serverSocket;
+    private Store store;
+    private MainHall mainHall;
+    private NewIdentityHandler newIdentityHandler;
 
     public Server(int port){
         try {
@@ -21,38 +26,43 @@ public class Server {
     }
 
     public void listen(){
-        while(true){
-            try {
-                Socket client = serverSocket.accept();
-                Thread clientThread = new Thread(Server.serverReadBuffer(client));
-                clientThread.start();
-            } catch (IOException e) {
-                e.printStackTrace();
+        new Thread(new Runnable(){
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        Socket client = serverSocket.accept();
+                        Thread clientThread = new Thread(new Client(client, Server.this));
+                        clientThread.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } 
+                }
             }
-        
-        }
+        }).start();
     }
 
-    public static Runnable serverReadBuffer(Socket socket){
-        return new Runnable() {
+    public void setStore(Store store){
+        this.store = store;
+    }
 
-            BufferedReader socketInputBuffer = null;
+    public Store getStore(){
+        return store;
+    }
 
-            public void run(){
+    public void setNewIdentityHandler(NewIdentityHandler newIdentityHandler){
+        this.newIdentityHandler = newIdentityHandler;
+    }
 
-                try {
-                    this.socketInputBuffer = new BufferedReader(new InputStreamReader(
-                        socket.getInputStream(), "utf-8"));
+    public NewIdentityHandler getNewIdentityHandler(){
+        return newIdentityHandler;
+    }
 
-                    while(true){
-                        String msg = this.socketInputBuffer.readLine();
-                        System.out.println(msg);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+    public void setMainHall(MainHall mainHall){
+        this.mainHall = mainHall;
+    }
 
-            }
-        };
+    public MainHall getMainHall(){
+        return mainHall;
     }
 }
