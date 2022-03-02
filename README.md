@@ -9,3 +9,11 @@ Make sure you have gradle on your machine. Original project initializing version
 ``` 
 ./gradlew run
 ```
+
+### Run client application
+
+check the IPv4 Address by using `ipconfig` command.
+
+```
+java -jar .\client.jar -h <IPv4 Address> -p 6000 -i lucifer
+```
