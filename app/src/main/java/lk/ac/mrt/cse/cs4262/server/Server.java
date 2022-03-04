@@ -6,19 +6,23 @@ import java.net.Socket;
 
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
+import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 
 public class Server {
     
+    private String serverName;
     private ServerSocket serverSocket;
     private Store store;
     private MainHall mainHall;
     private NewIdentityHandler newIdentityHandler;
+    private CreateRoomHandler createRoomHandler;
 
-    public Server(int port){
+    public Server(int port, String serverName){
         try {
+            this.serverName = serverName;
             this.serverSocket = new ServerSocket(port);
-            System.out.println("Server socket opened on port " + String.valueOf(port));
+            System.out.println("Server " + serverName + " opened on port " + String.valueOf(port));
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -60,9 +64,22 @@ public class Server {
 
     public void setMainHall(MainHall mainHall){
         this.mainHall = mainHall;
+        store.addRoom(mainHall.getRoomName(), serverName, mainHall);
     }
 
     public MainHall getMainHall(){
         return mainHall;
+    }
+
+    public String getServerName() {
+        return this.serverName;
+    }
+
+    public void setCreateRoomHandler(CreateRoomHandler createRoomHandler) {
+        this.createRoomHandler = createRoomHandler;
+    }
+
+    public CreateRoomHandler getCreateRoomHandler() {
+        return this.createRoomHandler;
     }
 }

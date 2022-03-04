@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
+import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
@@ -26,6 +27,9 @@ public class Client implements Runnable {
     private NewIdentityHandler newIdentityHandler;
     private String clientIdentifier;
     private Room room;
+    private String connectedServer;
+    private CreateRoomHandler createRoomHandler;
+    private String ownedRoom;
 
     public Client(Socket clientSocket, Server server) {
         this.clientSocket = clientSocket;
@@ -42,7 +46,10 @@ public class Client implements Runnable {
             e.printStackTrace();
         }
         this.gson = new Gson();
+        this.connectedServer = server.getServerName();
         this.newIdentityHandler = server.getNewIdentityHandler();
+        this.createRoomHandler = server.getCreateRoomHandler();
+        this.ownedRoom = "";
     }
 
     @Override
@@ -60,14 +67,13 @@ public class Client implements Runnable {
                     JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
 
                     String messageType = jsonObject.get("type").getAsString();
-                    String response = null;
                     System.out.println(jsonObject);
 
                     Map<String, String> map = new HashMap<>();
                     switch (messageType) {
                         case "newidentity":
                             String identity = jsonObject.get("identity").getAsString();
-                            response = newIdentityHandler.handleNewIdentity(identity, Client.this);
+                            String response = newIdentityHandler.handleNewIdentity(identity, Client.this);
                             send(response);
 
                             if (this.room != null) {
@@ -88,6 +94,40 @@ public class Client implements Runnable {
                             map.put("content", jsonObject.get("content").getAsString());
                             room.broadcast(Client.this, Util.getJsonString(map));
                             break;
+
+                        case "createroom":
+                            String roomID = jsonObject.get("roomid").getAsString();
+                            map.put("type", "createroom");
+                            map.put("roomid", roomID);
+
+                            Room newlyCreatedoom = createRoomHandler.handleCreateRoom(roomID, Client.this);
+                            if (newlyCreatedoom != null) {
+                                map.put("approved", "true");
+                                response = Util.getJsonString(map);
+                                send(response);
+
+                                Map<String, String> roomChange = new HashMap<>();
+                                roomChange.put("type", "roomchange");
+                                roomChange.put("identity", this.clientIdentifier);
+                                roomChange.put("former", this.room.getRoomName());
+                                roomChange.put("roomid", roomID);
+                                String roomChangeMessage = Util.getJsonString(roomChange);
+
+                                Room formerRoom = this.room;
+                                setRoom(newlyCreatedoom);
+                                setOwnedRoom(roomID);
+                                formerRoom.removeClientFromRoom(this);
+                                newlyCreatedoom.addClientToRoom(this);
+
+                                send(roomChangeMessage);
+                                formerRoom.broadcast(Client.this, roomChangeMessage);
+                            } else {
+                                map.put("approved", "false");
+                                response = Util.getJsonString(map);
+                                send(response);
+                            }
+                            break;
+
 
                         default:
                             break;
@@ -130,5 +170,17 @@ public class Client implements Runnable {
 
     public Room getRoom() {
         return room;
+    }
+
+    public String getConnectedServerName() {
+        return this.connectedServer;
+    }
+
+    public void setOwnedRoom(String roomID) {
+        this.ownedRoom = roomID;
+    }
+
+    public String getOwnedRoom() {
+        return this.ownedRoom;
     }
 }
