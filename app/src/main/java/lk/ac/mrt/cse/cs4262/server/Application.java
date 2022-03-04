@@ -31,9 +31,9 @@ public class Application {
 
         Server server = new Server(Integer.parseInt(props.getProperty("port")), "s1");
         server.setStore(Store.getInstance());
-        server.setMainHall(MainHall.getInstance("MainHall-s1"));
+        server.setMainHall(MainHall.getInstance("MainHall-s1", null));
         server.setNewIdentityHandler(new NewIdentityHandler(Store.getInstance(),
-                                        MainHall.getInstance("MainHall-s1")));
+                                        MainHall.getInstance("MainHall-s1", null)));
         server.setCreateRoomHandler(new CreateRoomHandler(Store.getInstance()));
         server.listen();
     }

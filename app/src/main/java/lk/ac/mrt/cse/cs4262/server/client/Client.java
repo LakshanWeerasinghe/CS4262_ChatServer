@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -69,7 +71,7 @@ public class Client implements Runnable {
                     String messageType = jsonObject.get("type").getAsString();
                     System.out.println(jsonObject);
 
-                    Map<String, String> map = new HashMap<>();
+                    Map<String, Object> map = new HashMap<>();
                     switch (messageType) {
                         case "newidentity":
                             String identity = jsonObject.get("identity").getAsString();
@@ -106,7 +108,7 @@ public class Client implements Runnable {
                                 response = Util.getJsonString(map);
                                 send(response);
 
-                                Map<String, String> roomChange = new HashMap<>();
+                                Map<String, Object> roomChange = new HashMap<>();
                                 roomChange.put("type", "roomchange");
                                 roomChange.put("identity", this.clientIdentifier);
                                 roomChange.put("former", this.room.getRoomName());
@@ -128,6 +130,20 @@ public class Client implements Runnable {
                             }
                             break;
 
+                        case "who":
+                            List<Client> clientList = this.room.getClientList();
+                            List<String> clientNamesList = new ArrayList<String>();
+                            for (Client client : clientList) {
+                                clientNamesList.add(client.clientIdentifier);
+                            }
+                            map.put("type", "roomcontents");
+                            map.put("roomid", this.room.getRoomName());
+                            map.put("identities", clientNamesList);
+                            map.put("owner", this.room.getOwner() == null? "" : this.room.getOwner().clientIdentifier);
+
+                            String message = Util.getJsonString(map);
+                            send(message);
+                            break;
 
                         default:
                             break;

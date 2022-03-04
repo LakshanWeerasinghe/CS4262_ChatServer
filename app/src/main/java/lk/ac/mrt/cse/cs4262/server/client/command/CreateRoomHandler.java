@@ -17,7 +17,7 @@ public class CreateRoomHandler {
             // call to leader room handler component
             boolean roomIDExists = false;
             if (!roomIDExists) {
-                room = new Room(roomID);
+                room = new Room(roomID, client);
                 store.addRoom(roomID, client.getConnectedServerName(), room);
             }
         }

@@ -10,11 +10,13 @@ import lk.ac.mrt.cse.cs4262.server.client.Client;
 public class Room {
 
     private String name;
+    private Client owner;
     private List<Client> clientList;
     private ExecutorService threadPool;
 
-    public Room(String name) {
+    public Room(String name, Client owner) {
         this.name = name;
+        this.owner = owner;
         this.clientList = new ArrayList<>();
         this.threadPool = Executors.newCachedThreadPool();
     }
@@ -22,6 +24,12 @@ public class Room {
     public String getRoomName() {
         return name;
     }
+
+    public Client getOwner() {
+        return owner;
+    }
+
+    public List<Client> getClientList() { return clientList; }
 
     public void addClientToRoom(Client client) {
         clientList.add(client);

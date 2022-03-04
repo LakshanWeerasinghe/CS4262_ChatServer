@@ -19,7 +19,7 @@ public class NewIdentityHandler {
     }
 
     public String handleNewIdentity(String identity, Client client){
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("type", "newidentity");
 
         if(store.clientIdentityExist(identity)){
