@@ -13,17 +13,17 @@ public class Store {
     private List<String> localClients;
     private List<String> localTmpClients;
     private final Object localClientsLock = new Object();
-    private Map<String, String> localRooms;
-    private List<String> localTmpRooms;
-    private final Object localRoomsLock = new Object();
+    private Map<String, String> allRooms;
+    private List<String> tmpRooms;
+    private final Object roomsLock = new Object();
     private Map<String, Room> managedRooms;
 
     private Store(){
         this.localClients = new ArrayList<>();
         this.localTmpClients = new ArrayList<>();
-        this.localRooms = new HashMap<>();
-        this.localTmpRooms = new ArrayList<>();
-        this.managedRooms = new HashMap<>();
+        this.allRooms = new HashMap<>(); // all rooms in the whole system
+        this.tmpRooms = new ArrayList<>();
+        this.managedRooms = new HashMap<>(); // rooms managed by this server
     }
 
     public static synchronized Store getInstance(){
@@ -59,27 +59,27 @@ public class Store {
     }
 
     public boolean roomIDExist(String roomID) {
-        synchronized(localRoomsLock) {
-            if (localRooms.containsKey(roomID) || localTmpRooms.contains(roomID))
+        synchronized(roomsLock) {
+            if (allRooms.containsKey(roomID) || tmpRooms.contains(roomID))
                 return true;
             else {
-                localTmpRooms.add(roomID);
+                tmpRooms.add(roomID);
                 return false;
             }
         }
     }
 
     public void addRoom(String roomID, String serverName, Room room) {
-        synchronized(localRoomsLock) {
-            localRooms.put(roomID, serverName);
+        synchronized(roomsLock) {
+            allRooms.put(roomID, serverName);
             managedRooms.put(roomID, room);
-            localTmpRooms.remove(roomID);
+            tmpRooms.remove(roomID);
         }
     }
 
     public void removeRoomIDFromTmp(String roomID) {
-        synchronized(localRoomsLock) {
-            localTmpRooms.remove(roomID);
+        synchronized(roomsLock) {
+            tmpRooms.remove(roomID);
         }
     }
 
