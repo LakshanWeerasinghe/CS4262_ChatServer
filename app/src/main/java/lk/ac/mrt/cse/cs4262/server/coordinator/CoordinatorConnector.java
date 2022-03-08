@@ -73,6 +73,10 @@ public class CoordinatorConnector implements Runnable{
     @Override
     public void run() {
         log.info("start to listen for coordinator connections");
+        handleMessage();
+    }
+
+    public Map<String, Object> handleMessage(){
         try {
             while (this.socket.isConnected()) {
                 String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
@@ -88,11 +92,11 @@ public class CoordinatorConnector implements Runnable{
         
                     Map<String, Object> map = new HashMap<>();
                     switch (messageType) {
-        
+                       
                         default:
                             break;
                     }
-        
+                    return map;
                 }
             }
         } catch (SocketException e) {
@@ -107,5 +111,6 @@ public class CoordinatorConnector implements Runnable{
                 log.error("error is {}", e.getMessage());
             }
         }
+        return null;
     }
 }

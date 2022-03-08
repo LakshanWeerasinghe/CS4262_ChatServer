@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
-import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 import lk.ac.mrt.cse.cs4262.server.startup.ServerStartUpThread;
 import lk.ac.mrt.cse.cs4262.server.util.ConfigUtil;
