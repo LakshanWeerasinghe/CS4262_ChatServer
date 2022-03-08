@@ -65,11 +65,12 @@ public class Server {
         startListenOnClientSocket();
     }
 
-    private void startListenOnCoordinatorSocket(){
-        log.info("start to listen for coordinator connections");
+    public void startListenOnCoordinatorSocket(){
         new Thread(new Runnable(){
             @Override
             public void run() {
+
+                log.info("start to listen for coordinator connections");
                 while(true){
                     try {
                         Socket coordinationConnectionSocket = coordinatorServerSocket.accept();
@@ -83,11 +84,21 @@ public class Server {
         }).start();
     }
 
-    private void startListenOnClientSocket(){
-        log.info("start to listen for client connections");
+    public void startListenOnClientSocket(){
         new Thread(new Runnable(){
             @Override
             public void run() {
+                while(!systemState.allServerActive()){
+                    try {
+                        log.info("start to sleep since all servers are not active yet.");
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        log.error("thread got interuptted while waiting for all servers start");
+                        log.error("error is {}", e.getMessage());
+                    }
+                }
+
+                log.info("start to listen for client connections");
                 while(true){
                     try {
                         Socket client = clientHandlerServerSocket.accept();
@@ -95,7 +106,7 @@ public class Server {
                         clientThread.start();
                     } catch (IOException e) {
                         log.error("error occored while trying to make a socket connection");
-                       log.error("error is {}", e.getMessage());
+                        log.error("error is {}", e.getMessage());
                     } 
                 }
             }

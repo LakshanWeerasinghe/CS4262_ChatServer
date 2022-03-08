@@ -57,8 +57,9 @@ public class CoordinatorConnection implements Runnable{
     @Override
     public void run() {
         try {
-            while (true) {
+            while (this.coordinatorSocket.isConnected()) {
                 String bufferedMessage = this.coordinatorInputBuffer.readLine();
+                
 
                 if (this.gson == null) {
                     this.gson = new Gson();

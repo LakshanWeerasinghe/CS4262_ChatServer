@@ -15,21 +15,25 @@ import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CoordinatorConnector {
+public class CoordinatorConnector implements Runnable{
 
     private static final Logger log = LoggerFactory.getLogger(CoordinatorConnector.class);
 
     private Socket socket;
     private BufferedReader coordinatorInputBuffer;
     private DataOutputStream coordinatorOutputBuffer;
+    private Gson gson;
 
     public CoordinatorConnector(String ip, int port) throws IOException{
         log.info("start to make a connection with server on ip {} port {}", ip, port);
         this.socket = new Socket(ip, port);
         log.info("successfully connected to the server on ip {} port {}", ip, port);
+    }
+
+    public CoordinatorConnector createInputOutputBuffers(){
         createInputBuffer(socket);
         createOutputBuffer(socket);
-        handleMessages();
+        return this;
     }
 
     private void createInputBuffer(Socket coordinatorSocket){
@@ -65,50 +69,43 @@ public class CoordinatorConnector {
         }
     }
 
-    private void handleMessages(){
+  
+    @Override
+    public void run() {
         log.info("start to listen for coordinator connections");
-        new Thread(new Runnable(){
-            private Gson gson;
-
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
+        try {
+            while (this.socket.isConnected()) {
+                String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
         
-                        if (this.gson == null) {
-                            this.gson = new Gson();
-                        }
+                if (this.gson == null) {
+                    this.gson = new Gson();
+                }
         
-                        if (bufferedMessage != null) {
-                            JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
+                if (bufferedMessage != null) {
+                    JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
         
-                            String messageType = jsonObject.get("type").getAsString();
-                            System.out.println(jsonObject);
+                    String messageType = jsonObject.get("type").getAsString();
         
-                            Map<String, Object> map = new HashMap<>();
-                            switch (messageType) {
+                    Map<String, Object> map = new HashMap<>();
+                    switch (messageType) {
         
-                                default:
-                                    break;
-                            }
-        
-                        }
+                        default:
+                            break;
                     }
-                } catch (SocketException e) {
-                    log.error("error socket connection interupted");
-                    log.error("error is {}", e.getMessage());
-                } catch (IOException e) {
-                    log.error("error is {}", e.getMessage());
-                }finally{
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        log.error("error is {}", e.getMessage());
-                    }
+        
                 }
             }
-        }).start();
-
+        } catch (SocketException e) {
+            log.error("error socket connection interupted");
+            log.error("error is {}", e.getMessage());
+        } catch (IOException e) {
+            log.error("error is {}", e.getMessage());
+        }finally{
+            try {
+                socket.close();
+            } catch (IOException e) {
+                log.error("error is {}", e.getMessage());
+            }
+        }
     }
 }

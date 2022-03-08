@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
+import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
+import lk.ac.mrt.cse.cs4262.server.startup.ServerStartUpThread;
 import lk.ac.mrt.cse.cs4262.server.util.ConfigUtil;
 
 public class Application {
@@ -52,6 +54,7 @@ public class Application {
                             .createCoordinatorServerSocket(serverConfigMap.get(serverName).getCoordinatorPort())
                             .createClientHandlerServerSocket(serverConfigMap.get(serverName).getClientPort());
 
+        serverConfigMap.get(serverName).setIsServerActive(true);
         SystemState systemState = SystemState.getInstance();
         systemState.setLeader(properties.getProperty("leader"));
         systemState.setSystemConfigMap(serverConfigMap);
@@ -62,7 +65,15 @@ public class Application {
         server.setNewIdentityHandler(new NewIdentityHandler(Store.getInstance(),
                                         MainHall.getInstance(mainHallName, null)));
         server.setCreateRoomHandler(new CreateRoomHandler(Store.getInstance()));
-        server.listen();
+        server.startListenOnCoordinatorSocket();
+
+        for (String otherServerName : serverConfigMap.keySet()) {
+            if(otherServerName != serverName){
+                new Thread(new ServerStartUpThread(serverConfigMap.get(otherServerName))).start();
+            }
+        }
+
+        server.startListenOnClientSocket();
     }
     
 }
