@@ -29,7 +29,9 @@ public class Application {
             e.printStackTrace();
         }
 
-        Server server = new Server(Integer.parseInt(props.getProperty("port")), "s1");
+        Server server = new Server("s1")
+                            .createCoordinatorServerSocket(6000)
+                            .createClientHandlerServerSocket(5000);
         server.setStore(Store.getInstance());
         server.setMainHall(MainHall.getInstance("MainHall-s1", null));
         server.setNewIdentityHandler(new NewIdentityHandler(Store.getInstance(),
