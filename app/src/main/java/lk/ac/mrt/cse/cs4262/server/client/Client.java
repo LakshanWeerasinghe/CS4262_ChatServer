@@ -76,6 +76,7 @@ public class Client implements Runnable {
                         case "newidentity":
                             String identity = jsonObject.get("identity").getAsString();
                             String response = newIdentityHandler.handleNewIdentity(identity, Client.this);
+                            
                             send(response);
 
                             if (this.room != null) {
