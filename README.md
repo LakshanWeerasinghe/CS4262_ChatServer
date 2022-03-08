@@ -7,7 +7,7 @@ Make sure you have gradle on your machine. Original project initializing version
 ### Run Project
 
 ``` 
-./gradlew run
+./gradlew run --args="s1 D:\projects\semester_8\distributed_systems\CS4262_ChatServer\sample_config"
 ```
 
 ### Run client application

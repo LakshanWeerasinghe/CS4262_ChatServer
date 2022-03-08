@@ -19,6 +19,7 @@ public class Server {
     
     private final String serverName;
     private Store store;
+    private SystemState systemState;
     private MainHall mainHall;
     private NewIdentityHandler newIdentityHandler;
     private CreateRoomHandler createRoomHandler;
@@ -107,6 +108,14 @@ public class Server {
 
     public Store getStore(){
         return store;
+    }
+
+    public void setSystemState(SystemState systemState){
+        this.systemState = systemState;
+    }
+
+    public SystemState getSystemState(){
+        return systemState;
     }
 
     public void setNewIdentityHandler(NewIdentityHandler newIdentityHandler){
