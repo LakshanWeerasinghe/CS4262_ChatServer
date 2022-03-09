@@ -30,7 +30,6 @@ public class Client implements Runnable {
     private String clientIdentifier;
     private Room room;
     private String connectedServer;
-    private CreateRoomHandler createRoomHandler;
     private String ownedRoom;
 
     public Client(Socket clientSocket, Server server) {
@@ -50,7 +49,6 @@ public class Client implements Runnable {
         this.gson = new Gson();
         this.connectedServer = server.getServerName();
         this.newIdentityHandler = server.getNewIdentityHandler();
-        this.createRoomHandler = server.getCreateRoomHandler();
         this.ownedRoom = "";
     }
 
@@ -103,7 +101,7 @@ public class Client implements Runnable {
                             map.put("type", "createroom");
                             map.put("roomid", roomID);
 
-                            Room newlyCreatedoom = createRoomHandler.handleCreateRoom(roomID, Client.this);
+                            Room newlyCreatedoom = CreateRoomHandler.handleCreateRoom(roomID, Client.this);
                             if (newlyCreatedoom != null) {
                                 map.put("approved", "true");
                                 response = Util.getJsonString(map);

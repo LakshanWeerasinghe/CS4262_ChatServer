@@ -69,7 +69,14 @@ public class Store {
         }
     }
 
-    public void addRoom(String roomID, String serverName, Room room) {
+    public void addRoom(String roomID, String serverName) {
+        synchronized(roomsLock) {
+            allRooms.put(roomID, serverName);
+            if (tmpRooms.contains(roomID)) tmpRooms.remove(roomID);
+        }
+    }
+
+    public void addManagedRoom(String roomID, String serverName, Room room) {
         synchronized(roomsLock) {
             allRooms.put(roomID, serverName);
             managedRooms.put(roomID, room);

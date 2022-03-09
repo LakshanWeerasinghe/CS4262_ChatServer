@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
+import lk.ac.mrt.cse.cs4262.server.Store;
+import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
+import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class CoordinatorConnection implements Runnable{
     
@@ -57,7 +60,7 @@ public class CoordinatorConnection implements Runnable{
     @Override
     public void run() {
         try {
-            while (this.coordinatorSocket.isConnected()) {
+            while (!this.coordinatorSocket.isClosed()) {
                 String bufferedMessage = this.coordinatorInputBuffer.readLine();
                 
 
@@ -72,7 +75,37 @@ public class CoordinatorConnection implements Runnable{
                     System.out.println(jsonObject);
 
                     Map<String, Object> map = new HashMap<>();
+                    String roomID, serverName;
                     switch (messageType) {
+                        case "checkroomexist":
+                            roomID = jsonObject.get("roomid").getAsString();
+                            serverName = jsonObject.get("serverid").getAsString();
+                            boolean roomIDExists = LeaderRoomHandler.getInstance().
+                                handleCreateRoom(roomID, serverName);
+                            
+                            map.put("type", "roomexist");
+                            map.put("roomid", roomID);
+                            map.put("exist", roomIDExists);
+                            send(Util.getJsonString(map));
+                            break;
+
+                        case "createroomack":
+                            boolean created = jsonObject.get("created").getAsBoolean();
+                            if (created) {
+                                roomID = jsonObject.get("roomid").getAsString();
+                                serverName = jsonObject.get("serverid").getAsString();
+                                LeaderRoomHandler.getInstance().
+                                    informAboutNewRoom(roomID, serverName);
+                            }
+                            coordinatorSocket.close();
+                            break;
+
+                        case "roomcreate":
+                            roomID = jsonObject.get("roomid").getAsString();
+                            serverName = jsonObject.get("serverid").getAsString();
+                            Store.getInstance().addRoom(roomID, serverName);
+                            coordinatorSocket.close();
+                            break;
 
                         default:
                             break;

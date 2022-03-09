@@ -40,5 +40,20 @@ public class SystemState {
     public boolean allServerActive(){
         return systemConfigMap.values().stream().allMatch(x -> x.getIsServerActive());
     }
+
+    public ServerConfigObj getLeaderConfig() {
+        if (systemConfigMap != null) return systemConfigMap.get(leader);
+        return null;
+    }
+
+    public String getIPOfServer(String serverName) {
+        if (systemConfigMap.containsKey(serverName)) return systemConfigMap.get(serverName).getHostIp();
+        return null;
+    }
+
+    public int getCoordinatorPortOfServer(String serverName) {
+        if (systemConfigMap.containsKey(serverName)) return systemConfigMap.get(serverName).getCoordinatorPort();
+        return -1;
+    }
    
 }

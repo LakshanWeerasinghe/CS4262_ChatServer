@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
-import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 import lk.ac.mrt.cse.cs4262.server.startup.ServerStartUpThread;
@@ -63,7 +62,7 @@ public class Application {
         server.setMainHall(MainHall.getInstance(mainHallName, null));
         server.setNewIdentityHandler(new NewIdentityHandler(Store.getInstance(),
                                         MainHall.getInstance(mainHallName, null)));
-        server.setCreateRoomHandler(new CreateRoomHandler(Store.getInstance()));
+
         server.startListenOnCoordinatorSocket();
 
         for (String otherServerName : serverConfigMap.keySet()) {

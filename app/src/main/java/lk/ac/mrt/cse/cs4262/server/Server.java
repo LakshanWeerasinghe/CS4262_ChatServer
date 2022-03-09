@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
-import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnection;
 
@@ -22,7 +21,6 @@ public class Server {
     private SystemState systemState;
     private MainHall mainHall;
     private NewIdentityHandler newIdentityHandler;
-    private CreateRoomHandler createRoomHandler;
     private ServerSocket coordinatorServerSocket;
     private ServerSocket clientHandlerServerSocket;
 
@@ -139,7 +137,7 @@ public class Server {
 
     public void setMainHall(MainHall mainHall){
         this.mainHall = mainHall;
-        store.addRoom(mainHall.getRoomName(), serverName, mainHall);
+        store.addManagedRoom(mainHall.getRoomName(), serverName, mainHall);
     }
 
     public MainHall getMainHall(){
@@ -148,13 +146,5 @@ public class Server {
 
     public String getServerName() {
         return this.serverName;
-    }
-
-    public void setCreateRoomHandler(CreateRoomHandler createRoomHandler) {
-        this.createRoomHandler = createRoomHandler;
-    }
-
-    public CreateRoomHandler getCreateRoomHandler() {
-        return this.createRoomHandler;
     }
 }

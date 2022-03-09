@@ -30,6 +30,16 @@ public class CoordinatorConnector implements Runnable{
         log.info("successfully connected to the server on ip {} port {}", ip, port);
     }
 
+    public CoordinatorConnector(String ip, int port, boolean createBuffers) throws IOException{
+        log.info("start to make a connection with server on ip {} port {}", ip, port);
+        this.socket = new Socket(ip, port);
+        log.info("successfully connected to the server on ip {} port {}", ip, port);
+        if (createBuffers) {
+            createInputBuffer(socket);
+            createOutputBuffer(socket);
+        }
+    }
+
     public CoordinatorConnector createInputOutputBuffers(){
         createInputBuffer(socket);
         createOutputBuffer(socket);
@@ -77,8 +87,9 @@ public class CoordinatorConnector implements Runnable{
     }
 
     public Map<String, Object> handleMessage(){
+        boolean done = false;
         try {
-            while (this.socket.isConnected()) {
+            while (!this.socket.isClosed()) {
                 String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
         
                 if (this.gson == null) {
@@ -92,6 +103,11 @@ public class CoordinatorConnector implements Runnable{
         
                     Map<String, Object> map = new HashMap<>();
                     switch (messageType) {
+                        case "roomexist":
+                            boolean roomIDExists = jsonObject.get("exist").getAsBoolean();
+                            map.put("exist", roomIDExists);
+                            done = true;
+                            break;
                        
                         default:
                             break;
@@ -106,7 +122,7 @@ public class CoordinatorConnector implements Runnable{
             log.error("error is {}", e.getMessage());
         }finally{
             try {
-                socket.close();
+                if (!done) socket.close();
             } catch (IOException e) {
                 log.error("error is {}", e.getMessage());
             }
