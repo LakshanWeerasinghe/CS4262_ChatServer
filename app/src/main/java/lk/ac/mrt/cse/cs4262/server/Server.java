@@ -11,6 +11,7 @@ import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnection;
+import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 
 public class Server {
 
@@ -108,6 +109,23 @@ public class Server {
                     } 
                 }
             }
+        }).start();
+    }
+
+    public void startHeartbeatMonitor() {
+        new Thread (new  Runnable () {
+            @Override
+            public void run() {
+                while(!systemState.allServerActive()){
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                HeartbeatMonitor.getInstance().startHeartbeatMonitor(serverName);                
+            }
+
         }).start();
     }
 

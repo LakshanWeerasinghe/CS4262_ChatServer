@@ -6,10 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.slf4j.Logger;
@@ -17,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.Store;
+import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
@@ -28,9 +33,11 @@ public class CoordinatorConnection implements Runnable{
     private BufferedReader coordinatorInputBuffer;
     private DataOutputStream coordinatorOutputBuffer;
     private Gson gson;
+    private String myServerName;
     
     public CoordinatorConnection(Socket coordinatorSocket, Server server){
         this.coordinatorSocket = coordinatorSocket;
+        this.myServerName = server.getServerName();
         createInputBuffer(coordinatorSocket);
         createOutputBuffer(coordinatorSocket);
         this.gson = new Gson();
@@ -59,6 +66,7 @@ public class CoordinatorConnection implements Runnable{
 
     @Override
     public void run() {
+        boolean done = false;
         try {
             while (!this.coordinatorSocket.isClosed()) {
                 String bufferedMessage = this.coordinatorInputBuffer.readLine();
@@ -107,9 +115,24 @@ public class CoordinatorConnection implements Runnable{
                             coordinatorSocket.close();
                             break;
 
+                        case "heartbeatcheck":
+                            map.put("type", "heartbeatsuccess");
+                            map.put("serverid", myServerName);
+                            send(Util.getJsonString(map));
+                            HeartbeatMonitor.getInstance().executeMonitor();
+                            break;
+
+                        case "failurenotice":
+                            JsonArray jArray = jsonObject.getAsJsonArray("failed");
+                            List<String> failed = new ArrayList<>();
+                            for (JsonElement e : jArray) failed.add(e.getAsString());
+                            HeartbeatMonitor.getInstance().updateFailedServers(failed);
+                            break;
+
                         default:
                             break;
                     }
+                    done = true;
 
                 }
             }
@@ -120,7 +143,7 @@ public class CoordinatorConnection implements Runnable{
             log.error("error is {}", e.getMessage());
         }finally{
             try {
-                coordinatorSocket.close();
+                if (!done) coordinatorSocket.close();
             } catch (IOException e) {
                 log.error("error is {}", e.getMessage());
             }

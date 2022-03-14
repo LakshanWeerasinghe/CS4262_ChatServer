@@ -15,6 +15,8 @@ import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
+
 public class CoordinatorConnector implements Runnable{
 
     private static final Logger log = LoggerFactory.getLogger(CoordinatorConnector.class);
@@ -105,13 +107,19 @@ public class CoordinatorConnector implements Runnable{
                     switch (messageType) {
                         case "roomexist":
                             boolean roomIDExists = jsonObject.get("exist").getAsBoolean();
-                            map.put("exist", roomIDExists);
-                            done = true;
+                            map.put("exist", roomIDExists);                            
+                            break;
+
+                        case "heartbeatsuccess":
+                            String serverName = jsonObject.get("serverid").getAsString();
+                            HeartbeatMonitor.getInstance().acknowledge(serverName);
+                            socket.close();
                             break;
                        
                         default:
                             break;
                     }
+                    done = true;
                     return map;
                 }
             }

@@ -72,6 +72,7 @@ public class Application {
         }
 
         server.startListenOnClientSocket();
+        server.startHeartbeatMonitor();
     }
     
 }
