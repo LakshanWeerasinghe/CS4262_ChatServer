@@ -41,14 +41,14 @@ public class Application {
         }
 
         try {
-            serverConfigMap = ConfigUtil.loadSystemConfig(configFilePath);
+            serverConfigMap = ConfigUtil.loadSystemConfig(configFilePath, serverName);
         } catch (FileNotFoundException e) {
             log.error("error occred while loading config file in path at {}", configFilePath);
             log.error("error is {}", e.getMessage());
             System.exit(1);
         }
 
-        Server server = new Server(serverName)
+        Server server = Server.getInstance(serverName)
                             .createCoordinatorServerSocket(serverConfigMap.get(serverName).getCoordinatorPort())
                             .createClientHandlerServerSocket(serverConfigMap.get(serverName).getClientPort());
 

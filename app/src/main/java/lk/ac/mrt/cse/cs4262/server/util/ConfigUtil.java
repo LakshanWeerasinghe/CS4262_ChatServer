@@ -22,7 +22,7 @@ public class ConfigUtil {
         return props;
     }
 
-    public static Map<String, ServerConfigObj> loadSystemConfig(String fileName) throws FileNotFoundException{
+    public static Map<String, ServerConfigObj> loadSystemConfig(String fileName, String serverName) throws FileNotFoundException{
         Map<String, ServerConfigObj> map = new HashMap<>();
         File file = new File(fileName);
         Scanner myReader = new Scanner(file);
@@ -30,7 +30,7 @@ public class ConfigUtil {
             String[] values = myReader.nextLine().strip().split("    ");
             System.out.print(values);
             map.put(values[0], new ServerConfigObj(
-                values[0], values[1], values[2], values[3]
+                values[0], values[1], values[2], values[3], values[4], serverName
             ));
         }
         myReader.close();

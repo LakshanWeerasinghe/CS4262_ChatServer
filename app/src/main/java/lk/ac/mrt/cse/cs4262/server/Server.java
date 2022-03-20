@@ -17,6 +17,8 @@ public class Server {
 
     private static final Logger log = LoggerFactory.getLogger(Server.class);
     
+    private static Server instance = null;
+    
     private final String serverName;
     private Store store;
     private SystemState systemState;
@@ -26,10 +28,20 @@ public class Server {
     private ServerSocket clientHandlerServerSocket;
 
 
-    public Server(String serverName){
+    private Server(String serverName){
         this.serverName = serverName;
     }
     
+    public static synchronized Server getInstance(String serverName){
+        if(instance == null){
+            instance = new Server(serverName);
+        }
+        return instance;
+    }
+
+    public static Server getInstance(){
+        return instance;
+    }
 
     public Server createCoordinatorServerSocket(int port){
         log.info("start creating coordinator server socket on port {}", port);

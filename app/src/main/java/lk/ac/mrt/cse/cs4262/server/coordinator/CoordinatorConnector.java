@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 
 public class CoordinatorConnector implements Runnable{
 
@@ -25,6 +26,7 @@ public class CoordinatorConnector implements Runnable{
     private BufferedReader coordinatorInputBuffer;
     private DataOutputStream coordinatorOutputBuffer;
     private Gson gson;
+    private String connectingServerName;
 
     public CoordinatorConnector(String ip, int port) throws IOException{
         log.info("start to make a connection with server on ip {} port {}", ip, port);
@@ -42,8 +44,12 @@ public class CoordinatorConnector implements Runnable{
         }
     }
 
-    public CoordinatorConnector createInputOutputBuffers(){
+    public CoordinatorConnector createInputBuffer(){
         createInputBuffer(socket);
+        return this;
+    }
+
+    public CoordinatorConnector createOutputBuffer(){
         createOutputBuffer(socket);
         return this;
     }
@@ -115,6 +121,14 @@ public class CoordinatorConnector implements Runnable{
                             HeartbeatMonitor.getInstance().acknowledge(serverName);
                             socket.close();
                             break;
+
+                        case "coordinator":
+                            map.put("coodinator", "answer");
+                            break;
+
+                        case "answer":
+                            LeaderElector.getInstance().updateElectionAnswerMap(connectingServerName);
+                            break;
                        
                         default:
                             break;
@@ -137,4 +151,24 @@ public class CoordinatorConnector implements Runnable{
         }
         return null;
     }
+
+    public void close(){
+        try {
+            socket.close();
+        } catch (IOException e) {
+            log.error("error when closing the socket");
+            log.error("error is {}", e.getMessage());
+        }
+    }
+
+    public String getConnectingServerName() {
+        return connectingServerName;
+    }
+
+    public CoordinatorConnector setConnectingServerName(String connectingServerName) {
+        this.connectingServerName = connectingServerName;
+        return this;
+    }
+
+    
 }

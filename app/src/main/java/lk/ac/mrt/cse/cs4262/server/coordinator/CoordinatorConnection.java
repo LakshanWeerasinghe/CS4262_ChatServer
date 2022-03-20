@@ -23,6 +23,8 @@ import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class CoordinatorConnection implements Runnable{
@@ -127,6 +129,26 @@ public class CoordinatorConnection implements Runnable{
                             List<String> failed = new ArrayList<>();
                             for (JsonElement e : jArray) failed.add(e.getAsString());
                             HeartbeatMonitor.getInstance().updateFailedServers(failed);
+                            break;
+
+                        case "election":
+                            map.put("type", "answer");
+                            send(Util.getJsonString(map));
+                            LeaderElector.getInstance()
+                                        .getLeaderElectorState()
+                                        .dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                            break;
+                        
+                        case "nomination":
+                            LeaderElector.getInstance()
+                                            .getLeaderElectorState()
+                                            .dispatchEvent(EventConstants.RECEIVE_NOMINATION);
+                            break;
+                        
+                        case "coordinator":
+                            LeaderElector.getInstance()
+                                            .getLeaderElectorState()
+                                            .dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
                             break;
 
                         default:
