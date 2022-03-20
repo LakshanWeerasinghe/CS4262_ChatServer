@@ -140,8 +140,19 @@ public class Client implements Runnable {
                             map.put("identities", clientNamesList);
                             map.put("owner", this.room.getOwner() == null? "" : this.room.getOwner().clientIdentifier);
 
-                            String message = Util.getJsonString(map);
-                            send(message);
+                            String roomContentMessage = Util.getJsonString(map);
+                            send(roomContentMessage);
+                            break;
+
+                        case "list":
+                            List<String> allRoomsNamesList = CreateRoomHandler.getAllRoomsNames();
+
+                            map.put("type", "roomlist");
+                            map.put("rooms", allRoomsNamesList);
+
+
+                            String roomListMessage = Util.getJsonString(map);
+                            send(roomListMessage);
                             break;
 
                         default:

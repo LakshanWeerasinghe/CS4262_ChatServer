@@ -93,4 +93,6 @@ public class Store {
     public Room getManagedRoom(String roomID) {
         return this.managedRooms.get(roomID);
     }
+
+    public Map<String, String> getAllRooms() { return this.allRooms; }
 }

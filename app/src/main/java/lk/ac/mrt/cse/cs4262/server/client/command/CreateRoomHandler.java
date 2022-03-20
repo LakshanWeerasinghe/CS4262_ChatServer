@@ -1,7 +1,9 @@
 package lk.ac.mrt.cse.cs4262.server.client.command;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import lk.ac.mrt.cse.cs4262.server.Store;
@@ -68,4 +70,11 @@ public class CreateRoomHandler {
         }
         return room;
     }
+
+    public static List<String> getAllRoomsNames() {
+        Map<String, String> allRooms = Store.getInstance().getAllRooms();
+        List<String> allRoomsNamesList = new ArrayList<String>(allRooms.keySet());
+        return allRoomsNamesList;
+    }
+
 }
