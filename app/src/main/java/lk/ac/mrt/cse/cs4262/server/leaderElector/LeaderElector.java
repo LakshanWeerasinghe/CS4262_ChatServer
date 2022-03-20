@@ -14,6 +14,7 @@ public class LeaderElector {
     private static final Logger log = LoggerFactory.getLogger(LeaderElector.class);
     
     private static LeaderElector instance = null;
+    private static final Object leaderElectorStateLock = new Object();
 
     private final ServerConfigObj myConfig;
 
@@ -21,6 +22,8 @@ public class LeaderElector {
     private Boolean noOneAnswered = true;
 
     private LeaderElectorState leaderElectorState;
+
+    private LeaderElectionHandler ownerThread = null;
 
     private LeaderElector(String serverName){
         this.myConfig = SystemState.getInstance().getServerConfig(serverName);
@@ -57,8 +60,23 @@ public class LeaderElector {
         return leaderElectorState;
     }
 
-    public void setLeaderElectorState(LeaderElectorState leaderElectorState) {
-        this.leaderElectorState = leaderElectorState;
+    public void setLeaderElectorState(LeaderElectorState leaderElectorState, LeaderElectionHandler owner) {
+        synchronized(leaderElectorStateLock){
+            if(owner == null){
+                this.leaderElectorState = leaderElectorState;
+            }
+            else{
+                if(owner.equals(ownerThread)){
+                    this.leaderElectorState = leaderElectorState;
+                }else{
+                    if(ownerThread != null){
+                        ownerThread.stopThread();
+                    }
+                    ownerThread = owner;
+                    this.leaderElectorState = leaderElectorState;
+                }
+            }
+        }
     }
 
     public ServerConfigObj getMyConfig() {
@@ -69,5 +87,14 @@ public class LeaderElector {
         electionAnswerMap.put(key, true);
         noOneAnswered = false;
     }
+
+    public Runnable getOwnerThread() {
+        return ownerThread;
+    }
+
+    public void setOwnerThread(LeaderElectionHandler ownerThread) {
+        this.ownerThread = ownerThread;
+    }
+    
     
 }

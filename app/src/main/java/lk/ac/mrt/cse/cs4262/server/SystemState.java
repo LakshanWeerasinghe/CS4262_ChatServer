@@ -1,14 +1,18 @@
 package lk.ac.mrt.cse.cs4262.server;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 
 public class SystemState {
 
     private static SystemState instance = null;
+    private final Object leaderUpdatingLock = new Object();
+
     private String leader;
     private Map<String, ServerConfigObj> systemConfigMap;
+    private AtomicBoolean isLeaderElected = new AtomicBoolean(true);
     
     private SystemState(){
         this.leader = null;
@@ -26,7 +30,9 @@ public class SystemState {
     }
 
     public void setLeader(String leader) {
-        this.leader = leader;
+        synchronized(leaderUpdatingLock){
+            this.leader = leader;
+        }
     }
 
     public Map<String, ServerConfigObj> getSystemConfigMap() {
@@ -60,4 +66,11 @@ public class SystemState {
         return this.systemConfigMap.get(serverName);
     }
    
+    public boolean isLeaderElected(){
+        return isLeaderElected.get();
+    }
+
+    public void updateLeaderElectionStatus(boolean value){
+        isLeaderElected.set(value);
+    }
 }

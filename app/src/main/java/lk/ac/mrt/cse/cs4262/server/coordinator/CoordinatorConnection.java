@@ -21,10 +21,11 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.Store;
+import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
-import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class CoordinatorConnection implements Runnable{
@@ -134,33 +135,25 @@ public class CoordinatorConnection implements Runnable{
                         case "election":
                             map.put("type", "answer");
                             send(Util.getJsonString(map));
-                            try {
-                                LeaderElector.getInstance()
-                                            .getLeaderElectorState()
-                                            .dispatchEvent(EventConstants.RECEIVE_ELECTION);
-                            } catch (InterruptedException e1) {
-                                e1.printStackTrace();
-                            }
+                            SystemState.getInstance().updateLeaderElectionStatus(false);
+                            SystemState.getInstance().setLeader(null);
+                            HeartbeatMonitor.getInstance().setSubordinateStarted(false);
+                            new LeaderElectionHandler(EventConstants.RECEIVE_ELECTION, null).start();
                             break;
                         
                         case "nomination":
-                            try {
-                                LeaderElector.getInstance()
-                                                .getLeaderElectorState()
-                                                .dispatchEvent(EventConstants.RECEIVE_NOMINATION);
-                            } catch (InterruptedException e1) {
-                                e1.printStackTrace();
-                            }
+                            SystemState.getInstance().updateLeaderElectionStatus(false);
+                            SystemState.getInstance().setLeader(null);
+                            HeartbeatMonitor.getInstance().setSubordinateStarted(false);
+                            new LeaderElectionHandler(EventConstants.RECEIVE_NOMINATION, null).start();
                             break;
                         
                         case "coordinator":
-                            try {
-                                LeaderElector.getInstance()
-                                                .getLeaderElectorState()
-                                                .dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
-                            } catch (InterruptedException e1) {
-                                e1.printStackTrace();
-                            }
+                            SystemState.getInstance().updateLeaderElectionStatus(false);
+                            SystemState.getInstance().setLeader(null);
+                            HeartbeatMonitor.getInstance().setSubordinateStarted(false);
+                            String leaderServerName = jsonObject.get("value").getAsString();
+                            new LeaderElectionHandler(EventConstants.RECEIVE_COORDINATOR, leaderServerName).start();
                             break;
 
                         default:

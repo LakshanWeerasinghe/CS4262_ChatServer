@@ -86,10 +86,10 @@ public class Application {
         server.waitForAllServersToStart();
 
         if(leaderServerConfig.getName().equals(serverName)){
-            LeaderElector.getInstance().setLeaderElectorState(new LeaderState(LeaderElector.getInstance()));
+            LeaderElector.getInstance().setLeaderElectorState(new LeaderState(LeaderElector.getInstance()), null);
         }
         else{
-            LeaderElector.getInstance().setLeaderElectorState(new NotLeaderState(LeaderElector.getInstance()));
+            LeaderElector.getInstance().setLeaderElectorState(new NotLeaderState(LeaderElector.getInstance()), null);
         }
     
         server.startListenOnClientSocket();

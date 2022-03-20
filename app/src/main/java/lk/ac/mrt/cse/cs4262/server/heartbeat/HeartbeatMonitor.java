@@ -11,12 +11,13 @@ import java.util.concurrent.Executors;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.state.LeaderState;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.state.NotLeaderState;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class HeartbeatMonitor {
-
-    private final String leaderName;
 
     private final Object configLock = new Object();
     private final Object checkerLock = new Object();
@@ -40,12 +41,11 @@ public class HeartbeatMonitor {
     private boolean subordinateStarted;
     private boolean isLeaderActive;
 
-    private boolean iamLeader;
+    // private boolean iamLeader;
 
     private static HeartbeatMonitor instance;
 
     private HeartbeatMonitor() {
-        leaderName = SystemState.getInstance().getLeader();
 
         Map<String, Object> map = new HashMap<>();
         map.put("type", "heartbeatcheck");
@@ -61,7 +61,7 @@ public class HeartbeatMonitor {
     private void initializeLeaderMonitor() {
         checkers = new HashMap<>();
         for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet())
-            if (!serverName.equals(leaderName))
+            if (!serverName.equals(SystemState.getInstance().getLeader()))
                 checkers.put(serverName, new Checker(false));
 
         failedServers = new ArrayList<>();
@@ -69,18 +69,18 @@ public class HeartbeatMonitor {
         threadPool = Executors.newFixedThreadPool(maxPoolSize);
         failureNotice.put("type", "failurenotice");
 
-        iamLeader = true;
+        // iamLeader = true;
     }
 
     private void initializeSubordinateMonitor() {
         subordinateStarted = false;
         maxPoolSize = 5;
         threadPool = Executors.newFixedThreadPool(maxPoolSize);
-        iamLeader = false;
+        // iamLeader = false;
     }
 
     public void startHeartbeatMonitor(String serverName) {
-        if (serverName.equals(leaderName)) {
+        if (serverName.equals(SystemState.getInstance().getLeader())) {
             initializeLeaderMonitor();
             startLeaderHeartbeat();
         } else {
@@ -92,7 +92,7 @@ public class HeartbeatMonitor {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
+                while (LeaderElector.getInstance().getLeaderElectorState() instanceof LeaderState) {
                     failedServers.clear();
                     // block other threads requesting the config update
                     synchronized (configLock) {
@@ -105,7 +105,7 @@ public class HeartbeatMonitor {
                         }
                         // send heartbeat checking messages to all subordinate servers
                         for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet()) {
-                            if (!serverName.equals(leaderName)) {
+                            if (!serverName.equals(SystemState.getInstance().getLeader())) {
                                 try {
                                     CoordinatorConnector cc = new CoordinatorConnector(
                                             SystemState.getInstance().getIPOfServer(serverName),
@@ -143,7 +143,7 @@ public class HeartbeatMonitor {
                         synchronized (checkerLock) {
                             boolean isActive;
                             for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet()) {
-                                if (!serverName.equals(leaderName)) {
+                                if (!serverName.equals(SystemState.getInstance().getLeader())) {
                                     isActive = checkers.get(serverName).getValue();
                                     SystemState.getInstance().getSystemConfigMap().get(serverName)
                                             .setIsServerActive(isActive);
@@ -159,7 +159,7 @@ public class HeartbeatMonitor {
                             failureNotice.put("failed", failedServers);
                             String message = Util.getJsonString(failureNotice);
                             for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet()) {
-                                if (!serverName.equals(leaderName)) {
+                                if (!serverName.equals(SystemState.getInstance().getLeader())) {
                                     CoordinatorConnector cc;
                                     try {
                                         cc = new CoordinatorConnector(
@@ -189,7 +189,7 @@ public class HeartbeatMonitor {
     public void acknowledge(String serverName) {
         System.out.println("acknowledge");
         synchronized (checkerLock) {
-            if (iamLeader) {
+            if (LeaderElector.getInstance().getLeaderElectorState() instanceof LeaderState) {
                 checkers.get(serverName).setValue(true);
                 serverChecks--;
             } else {
@@ -268,13 +268,12 @@ public class HeartbeatMonitor {
                         if (!isLeaderActive) {
                             subordinateStarted = false;
                             System.out.println("Starting Leader Election");
-                            try {
-                                LeaderElector.getInstance()
-                                                .getLeaderElectorState()
-                                                .dispatchEvent(EventConstants.T1_EXPIRED);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+
+                            SystemState.getInstance().updateLeaderElectionStatus(false);
+                            SystemState.getInstance().setLeader(null);
+                            LeaderElectionHandler leaderElectionHandler = 
+                                    new LeaderElectionHandler(EventConstants.T1_EXPIRED, null);
+                            leaderElectionHandler.start();
                         }
                     }
                 }
@@ -283,8 +282,8 @@ public class HeartbeatMonitor {
     }
 
     public void executeMonitor() {
-        if (!iamLeader)
-        System.out.println("execute");
+        if (LeaderElector.getInstance().getLeaderElectorState() instanceof NotLeaderState)
+            System.out.println("execute");
             executeSubordinateHeartbeat();
     }
 
@@ -308,4 +307,14 @@ public class HeartbeatMonitor {
             return map;
         return null;
     }
+
+    public boolean isSubordinateStarted() {
+        return subordinateStarted;
+    }
+
+    public void setSubordinateStarted(boolean subordinateStarted) {
+        this.subordinateStarted = subordinateStarted;
+    }
+
+    
 }

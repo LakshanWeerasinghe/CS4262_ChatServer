@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
@@ -52,7 +53,7 @@ public class ChoosingState extends LeaderElectorState{
         getLeaderElector().getElectionAnswerMap().remove(highestPriorityServer.getName());
     }
 
-    private void sendNominationMessage(){
+    private void sendNominationMessage(LeaderElectionHandler owner){
         try {
             CoordinatorConnector nominationConnector = 
                 new CoordinatorConnector(highestPriorityServer.getHostIp(), 
@@ -64,16 +65,16 @@ public class ChoosingState extends LeaderElectorState{
                 Map<String, Object> answer =  nominationConnector.handleMessage(); // handle coodiator Message
                 nominationConnector.close();
                 if(answer.containsKey("coordinator")){
-                    SystemState.getInstance().setLeader(highestPriorityServer.getName());
-                    dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                    owner.setCoordinatingServerName(highestPriorityServer.getName());
+                    dispatchEvent(EventConstants.RECEIVE_COORDINATOR, owner);
                 }
                 else{
                     highestPriorityServer = null;
                     findHighestPriorityServer();
                     if(highestPriorityServer != null){
-                        sendNominationMessage();
+                        sendNominationMessage(owner);
                     }else{
-                        dispatchEvent(EventConstants.T3_EXPIRED);
+                        dispatchEvent(EventConstants.T3_EXPIRED, owner);
                     }
                 }
 
@@ -88,26 +89,26 @@ public class ChoosingState extends LeaderElectorState{
     }
 
     @Override
-    public void dispatchEvent(String event) throws InterruptedException {
+    public void dispatchEvent(String event, LeaderElectionHandler owner) throws InterruptedException {
         switch(event){
             case EventConstants.RECEIVE_COORDINATOR:
-                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()));
-                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()), owner);
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR, owner);
                 break;
             
             case EventConstants.T3_EXPIRED:
-                getLeaderElector().setLeaderElectorState(new StartUpState(getLeaderElector()));
-                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.START);
+                getLeaderElector().setLeaderElectorState(new StartUpState(getLeaderElector()), owner);
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.START, owner);
                 break;
 
             case EventConstants.RECEIVE_ELECTION:
-                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()));
-                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()), owner);
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION, owner);
                 break;
 
             case EventConstants.SEND_NOMINATION:
                 findHighestPriorityServer();
-                sendNominationMessage();
+                sendNominationMessage(owner);
                 break;
                 
             default:

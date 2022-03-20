@@ -7,9 +7,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
@@ -26,8 +28,14 @@ public class LeaderState extends LeaderElectorState{
 
     private void buildCoordinatorMsg(){
         Map<String, Object> coordinatorMsgMap = new HashMap<>();
-        coordinatorMsgMap.put("type", "election");
+        coordinatorMsgMap.put("type", "coordinator");
+        coordinatorMsgMap.put("value", getLeaderElector().getMyConfig().getName());
         coordinatorMsg = Util.getJsonString(coordinatorMsgMap);
+    }
+
+    private void updateLeader(LeaderElectionHandler owner){
+        SystemState.getInstance().setLeader(owner.getCoordinatingServerName());
+        SystemState.getInstance().updateLeaderElectionStatus(true);
     }
 
     private void sendCoordinatorMsg(){
@@ -50,20 +58,22 @@ public class LeaderState extends LeaderElectorState{
     }
 
     @Override
-    public void dispatchEvent(String event) throws InterruptedException {
+    public void dispatchEvent(String event, LeaderElectionHandler owner) throws InterruptedException {
         switch(event){
             case EventConstants.RECEIVE_ELECTION:
-                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()));
-                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()), owner);
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION, owner);
                 break;
 
             case EventConstants.RECEIVE_COORDINATOR:
-                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()));
-                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()), owner);
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR, owner);
                 break;
             
             case EventConstants.SEND_COORDINATOR:
+                updateLeader(owner);
                 sendCoordinatorMsg();
+                Server.getInstance().startHeartbeatMonitor();
                 break;
 
             default:

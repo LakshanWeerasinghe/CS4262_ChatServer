@@ -1,5 +1,6 @@
 package lk.ac.mrt.cse.cs4262.server.leaderElector.state;
 
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 
 public abstract class LeaderElectorState {
@@ -14,5 +15,5 @@ public abstract class LeaderElectorState {
         return leaderElector;
     }
     
-    public abstract void dispatchEvent(String event) throws InterruptedException;
+    public abstract void dispatchEvent(String event, LeaderElectionHandler owner) throws InterruptedException;
 }
