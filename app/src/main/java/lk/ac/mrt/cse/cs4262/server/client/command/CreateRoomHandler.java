@@ -1,17 +1,16 @@
 package lk.ac.mrt.cse.cs4262.server.client.command;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
+import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class CreateRoomHandler {
@@ -73,8 +72,20 @@ public class CreateRoomHandler {
 
     public static List<String> getAllRoomsNames() {
         Map<String, String> allRooms = Store.getInstance().getAllRooms();
-        List<String> allRoomsNamesList = new ArrayList<String>(allRooms.keySet());
-        return allRoomsNamesList;
+        Set allRoomsNamesSet = new HashSet(allRooms.keySet());
+
+        // adding MainHall rooms of live servers
+        List<ServerConfigObj> serverConfigurations = new ArrayList<ServerConfigObj>(SystemState.getInstance().getSystemConfigMap().values());
+        List<String> liveServerNames = new ArrayList<String>();
+        for (ServerConfigObj serverConfigObj : serverConfigurations) {
+            if (serverConfigObj.getIsServerActive() == true) {
+                liveServerNames.add(serverConfigObj.getName());
+            }
+        }
+        for (String serverName : liveServerNames) {
+            allRoomsNamesSet.add("MainHall-" + serverName);
+        }
+        return new ArrayList<String>(allRoomsNamesSet);
     }
 
 }
