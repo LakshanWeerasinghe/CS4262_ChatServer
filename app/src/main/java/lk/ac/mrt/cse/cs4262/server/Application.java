@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.state.LeaderState;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.state.NotLeaderState;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 import lk.ac.mrt.cse.cs4262.server.startup.ServerStartUpThread;
 import lk.ac.mrt.cse.cs4262.server.util.ConfigUtil;
@@ -57,6 +60,8 @@ public class Application {
         systemState.setLeader(properties.getProperty("leader"));
         systemState.setSystemConfigMap(serverConfigMap);
 
+        LeaderElector.getInstance(serverName);
+
         server.setSystemState(SystemState.getInstance());
         server.setStore(Store.getInstance());
         server.setMainHall(MainHall.getInstance(mainHallName, null));
@@ -65,14 +70,31 @@ public class Application {
 
         server.startListenOnCoordinatorSocket();
 
+        ServerConfigObj leaderServerConfig =  null;
+
         for (String otherServerName : serverConfigMap.keySet()) {
+            ServerConfigObj otherServerConfigObj = serverConfigMap.get(otherServerName);
+            
+            if(leaderServerConfig == null || leaderServerConfig.getPriority() < otherServerConfigObj.getPriority()){
+                leaderServerConfig = otherServerConfigObj;
+            }
+
             if(otherServerName != serverName){
                 new Thread(new ServerStartUpThread(serverConfigMap.get(otherServerName))).start();
             }
         }
+        server.waitForAllServersToStart();
 
+        if(leaderServerConfig.getName().equals(serverName)){
+            LeaderElector.getInstance().setLeaderElectorState(new LeaderState(LeaderElector.getInstance()));
+        }
+        else{
+            LeaderElector.getInstance().setLeaderElectorState(new NotLeaderState(LeaderElector.getInstance()));
+        }
+    
         server.startListenOnClientSocket();
         server.startHeartbeatMonitor();
+
     }
     
 }

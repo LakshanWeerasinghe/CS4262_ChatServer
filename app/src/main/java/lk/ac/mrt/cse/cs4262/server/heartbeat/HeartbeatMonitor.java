@@ -10,6 +10,8 @@ import java.util.concurrent.Executors;
 
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class HeartbeatMonitor {
@@ -266,6 +268,13 @@ public class HeartbeatMonitor {
                         if (!isLeaderActive) {
                             subordinateStarted = false;
                             System.out.println("Starting Leader Election");
+                            try {
+                                LeaderElector.getInstance()
+                                                .getLeaderElectorState()
+                                                .dispatchEvent(EventConstants.T1_EXPIRED);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

@@ -31,7 +31,7 @@ public class StartUpState extends LeaderElectorState{
     }
 
 
-    public void sendElectionMessages(){
+    private void sendElectionMessages(){
         getLeaderElector().setElectionAnswerMap(new HashMap<>());
         SystemState.getInstance().getSystemConfigMap().values().forEach(
             x -> {
@@ -54,18 +54,40 @@ public class StartUpState extends LeaderElectorState{
     }
 
     @Override
-    public void dispatchEvent(String event) {
+    public void dispatchEvent(String event) throws InterruptedException {
         switch(event){
+            case EventConstants.START:
+                sendElectionMessages();
+                Thread.sleep(EventConstants.TIME_INTERVAL_T2);
+                if(getLeaderElector().isNoOneAnswered()){
+                    SystemState.getInstance().setLeader(getLeaderElector().getMyConfig().getName());
+                    dispatchEvent(EventConstants.T2_EXPIRED);
+                }else{
+                    dispatchEvent(EventConstants.RECEIVE_ANSWER);
+                }
+                if(getLeaderElector().getLeaderElectorState() instanceof StartUpState){
+                    dispatchEvent(EventConstants.START);
+                }
+                break;
+
             case EventConstants.T2_EXPIRED:
                 getLeaderElector().setLeaderElectorState(new LeaderState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.SEND_COORDINATOR);
                 break;
             
             case EventConstants.RECEIVE_ANSWER:
                 getLeaderElector().setLeaderElectorState(new ChoosingState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.SEND_NOMINATION);
                 break;
 
             case EventConstants.RECEIVE_ELECTION:
                 getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                break;
+
+            case EventConstants.RECEIVE_COORDINATOR:
+                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
                 break;
                 
             default:

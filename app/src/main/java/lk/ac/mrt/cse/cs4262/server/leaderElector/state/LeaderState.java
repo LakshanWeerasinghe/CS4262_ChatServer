@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
+import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
@@ -29,7 +30,7 @@ public class LeaderState extends LeaderElectorState{
         coordinatorMsg = Util.getJsonString(coordinatorMsgMap);
     }
 
-    public void sendCoordinatorMsg(){
+    private void sendCoordinatorMsg(){
         SystemState.getInstance().getSystemConfigMap().values().forEach(
             x -> {
                 if(x.getPriority() < getLeaderElector().getMyConfig().getPriority()){
@@ -49,8 +50,25 @@ public class LeaderState extends LeaderElectorState{
     }
 
     @Override
-    public void dispatchEvent(String event) {
-        // TODO Auto-generated method stub
+    public void dispatchEvent(String event) throws InterruptedException {
+        switch(event){
+            case EventConstants.RECEIVE_ELECTION:
+                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                break;
+
+            case EventConstants.RECEIVE_COORDINATOR:
+                getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                break;
+            
+            case EventConstants.SEND_COORDINATOR:
+                sendCoordinatorMsg();
+                break;
+
+            default:
+                break;
+        }
         
     }
     

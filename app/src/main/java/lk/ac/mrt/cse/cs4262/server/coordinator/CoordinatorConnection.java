@@ -134,21 +134,33 @@ public class CoordinatorConnection implements Runnable{
                         case "election":
                             map.put("type", "answer");
                             send(Util.getJsonString(map));
-                            LeaderElector.getInstance()
-                                        .getLeaderElectorState()
-                                        .dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                            try {
+                                LeaderElector.getInstance()
+                                            .getLeaderElectorState()
+                                            .dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
                             break;
                         
                         case "nomination":
-                            LeaderElector.getInstance()
-                                            .getLeaderElectorState()
-                                            .dispatchEvent(EventConstants.RECEIVE_NOMINATION);
+                            try {
+                                LeaderElector.getInstance()
+                                                .getLeaderElectorState()
+                                                .dispatchEvent(EventConstants.RECEIVE_NOMINATION);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
                             break;
                         
                         case "coordinator":
-                            LeaderElector.getInstance()
-                                            .getLeaderElectorState()
-                                            .dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                            try {
+                                LeaderElector.getInstance()
+                                                .getLeaderElectorState()
+                                                .dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
                             break;
 
                         default:

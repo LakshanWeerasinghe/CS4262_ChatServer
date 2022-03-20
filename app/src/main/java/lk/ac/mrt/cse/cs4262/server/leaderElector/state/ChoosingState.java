@@ -36,7 +36,7 @@ public class ChoosingState extends LeaderElectorState{
         nominationMsg = Util.getJsonString(nominationMsgMap);
     }
 
-    public void findHighestPriorityServer(){
+    private void findHighestPriorityServer(){
         for (String key : getLeaderElector().getElectionAnswerMap().keySet()) {
             if(getLeaderElector().getElectionAnswerMap().get(key)){
                 ServerConfigObj serverConfig = SystemState.getInstance().getServerConfig(key);
@@ -52,7 +52,7 @@ public class ChoosingState extends LeaderElectorState{
         getLeaderElector().getElectionAnswerMap().remove(highestPriorityServer.getName());
     }
 
-    public void sendNominationMessage(){
+    private void sendNominationMessage(){
         try {
             CoordinatorConnector nominationConnector = 
                 new CoordinatorConnector(highestPriorityServer.getHostIp(), 
@@ -73,7 +73,7 @@ public class ChoosingState extends LeaderElectorState{
                     if(highestPriorityServer != null){
                         sendNominationMessage();
                     }else{
-                        dispatchEvent(EventConstants.T3_EXPIRED_NO_MSG);
+                        dispatchEvent(EventConstants.T3_EXPIRED);
                     }
                 }
 
@@ -88,16 +88,28 @@ public class ChoosingState extends LeaderElectorState{
     }
 
     @Override
-    public void dispatchEvent(String event) {
+    public void dispatchEvent(String event) throws InterruptedException {
         switch(event){
             case EventConstants.RECEIVE_COORDINATOR:
                 getLeaderElector().setLeaderElectorState(new NotLeaderState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_COORDINATOR);
                 break;
             
-            case EventConstants.T3_EXPIRED_NO_MSG:
+            case EventConstants.T3_EXPIRED:
                 getLeaderElector().setLeaderElectorState(new StartUpState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.START);
                 break;
 
+            case EventConstants.RECEIVE_ELECTION:
+                getLeaderElector().setLeaderElectorState(new SomeoneStartState(getLeaderElector()));
+                getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.RECEIVE_ELECTION);
+                break;
+
+            case EventConstants.SEND_NOMINATION:
+                findHighestPriorityServer();
+                sendNominationMessage();
+                break;
+                
             default:
                 break;
         }

@@ -14,5 +14,5 @@ public abstract class LeaderElectorState {
         return leaderElector;
     }
     
-    public abstract void dispatchEvent(String event);
+    public abstract void dispatchEvent(String event) throws InterruptedException;
 }

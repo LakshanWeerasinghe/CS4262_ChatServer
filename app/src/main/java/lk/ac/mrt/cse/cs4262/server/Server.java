@@ -99,16 +99,6 @@ public class Server {
         new Thread(new Runnable(){
             @Override
             public void run() {
-                while(!systemState.allServerActive()){
-                    try {
-                        log.info("start to sleep since all servers are not active yet.");
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        log.error("thread got interuptted while waiting for all servers start");
-                        log.error("error is {}", e.getMessage());
-                    }
-                }
-
                 log.info("start to listen for client connections");
                 while(true){
                     try {
@@ -139,6 +129,18 @@ public class Server {
             }
 
         }).start();
+    }
+
+    public void waitForAllServersToStart(){
+        while(!systemState.allServerActive()){
+            try {
+                log.info("start to sleep since all servers are not active yet.");
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                log.error("thread got interuptted while waiting for all servers start");
+                log.error("error is {}", e.getMessage());
+            }
+        }
     }
 
     public void setStore(Store store){
