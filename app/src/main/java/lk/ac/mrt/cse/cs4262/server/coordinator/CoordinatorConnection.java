@@ -16,6 +16,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import lk.ac.mrt.cse.cs4262.server.SystemState;
+import lk.ac.mrt.cse.cs4262.server.leader.LeaderIndentityHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +85,7 @@ public class CoordinatorConnection implements Runnable{
                     System.out.println(jsonObject);
 
                     Map<String, Object> map = new HashMap<>();
-                    String roomID, serverName;
+                    String roomID, serverName, identity;
                     switch (messageType) {
                         case "checkroomexist":
                             roomID = jsonObject.get("roomid").getAsString();
@@ -127,6 +129,34 @@ public class CoordinatorConnection implements Runnable{
                             List<String> failed = new ArrayList<>();
                             for (JsonElement e : jArray) failed.add(e.getAsString());
                             HeartbeatMonitor.getInstance().updateFailedServers(failed);
+                            break;
+
+                        case "checkidentityexist":
+                            System.out.println("-----checkidentityexist request-------");
+                            identity = jsonObject.get("identity").getAsString();
+                            map.put("type", "identityexist");
+                            map.put("identity", identity);
+                            // check for the identity in local and tmp client lists
+                            if(Store.getInstance().clientIdentityExist(identity)){
+                                map.put("exist", "true");
+                            } else {
+                                SystemState s = SystemState.getInstance();
+                                if (myServerName.equals(s.getLeader())) {
+                                    // if you are the leader, ask from other servers for the identity
+                                    Boolean identityExist = LeaderIndentityHandler.getInstance().askIndentityExist(identity);
+                                    if(identityExist) {
+                                        map.put("exist", "true");
+                                    } else {
+                                        map.put("exist", "false");
+                                    }
+                                } else {
+                                    // if you are not the leader, reply the leader with identity not exist
+                                    map.put("exist", "false");
+                                }
+                                Store.getInstance().removeClientIdentityFromTmp(identity);
+                            }
+
+                            send(Util.getJsonString(map));
                             break;
 
                         default:
