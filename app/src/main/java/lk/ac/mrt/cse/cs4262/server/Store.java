@@ -24,6 +24,9 @@ public class Store {
         this.allRooms = new HashMap<>(); // all rooms in the whole system
         this.tmpRooms = new ArrayList<>();
         this.managedRooms = new HashMap<>(); // rooms managed by this server
+
+        for (String s : SystemState.getInstance().getSystemConfigMap().keySet())
+            allRooms.put("MainHall-"+s, s);
     }
 
     public static synchronized Store getInstance(){
@@ -95,4 +98,8 @@ public class Store {
     }
 
     public Map<String, String> getAllRooms() { return this.allRooms; }
+
+    public boolean isManagedRoom(String roomID) {
+        return this.managedRooms.containsKey(roomID);
+    }
 }
