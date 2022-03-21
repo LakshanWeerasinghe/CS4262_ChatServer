@@ -44,10 +44,10 @@ public class NewIdentityHandler {
                                 s.getLeaderConfig().getCoordinatorPort(),
                                 true
                         );
-
                         Map<String, Object> leaderMap = new HashMap<>();
                         leaderMap.put("type", "checkidentityexist");
                         leaderMap.put("identity", identity);
+                        leaderMap.put("serverid", client.getConnectedServerName());
                         cc.sendMessage(Util.getJsonString(leaderMap));
 
                         Boolean b = (Boolean) cc.handleMessage().get("exist");
@@ -56,7 +56,7 @@ public class NewIdentityHandler {
                         e.printStackTrace();
                     }
                 } else { // if this is the leader, ask from other servers whether the identity exists
-                    identityExists = LeaderIndentityHandler.getInstance().askIndentityExist(identity);
+                    identityExists = LeaderIndentityHandler.getInstance().askIndentityExist(identity, client.getConnectedServerName());
                 }
 
                 if (identityExists){

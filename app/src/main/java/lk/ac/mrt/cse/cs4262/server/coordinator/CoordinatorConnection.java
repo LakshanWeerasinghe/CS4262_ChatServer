@@ -132,8 +132,8 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "checkidentityexist":
-                            System.out.println("-----checkidentityexist request-------");
                             identity = jsonObject.get("identity").getAsString();
+                            serverName = jsonObject.get("serverid").getAsString();
                             map.put("type", "identityexist");
                             map.put("identity", identity);
                             // check for the identity in local and tmp client lists
@@ -143,7 +143,7 @@ public class CoordinatorConnection implements Runnable{
                                 SystemState s = SystemState.getInstance();
                                 if (myServerName.equals(s.getLeader())) {
                                     // if you are the leader, ask from other servers for the identity
-                                    Boolean identityExist = LeaderIndentityHandler.getInstance().askIndentityExist(identity);
+                                    Boolean identityExist = LeaderIndentityHandler.getInstance().askIndentityExist(identity, serverName);
                                     if(identityExist) {
                                         map.put("exist", "true");
                                     } else {
