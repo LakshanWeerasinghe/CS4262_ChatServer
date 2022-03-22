@@ -90,4 +90,35 @@ public class LeaderRoomHandler {
         }
 
     }
+
+    public void informAboutDeleteRoom(String roomID, String serverName) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", "deleteroom");
+        map.put("serverid", serverName);
+        map.put("roomid", roomID);
+
+        SystemState s = SystemState.getInstance();
+        String leaderServer = s.getLeader();
+
+        for (String otherServerName : SystemState.getInstance().getSystemConfigMap().keySet()) {
+            if (!(otherServerName.equals(leaderServer) || otherServerName.equals(serverName))) {
+                threadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            CoordinatorConnector cc = new CoordinatorConnector(
+                                    s.getIPOfServer(otherServerName),
+                                    s.getCoordinatorPortOfServer(otherServerName),
+                                    true);
+                            cc.sendMessage(Util.getJsonString(map));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    };
+                });
+
+            }
+        }
+    }
+
 }

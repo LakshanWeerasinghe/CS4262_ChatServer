@@ -93,6 +93,21 @@ public class Store {
         }
     }
 
+    public Room deleteRoomIDFromAllAndManaged(String roomID) {
+        synchronized(roomsLock) {
+            Room deleteRoom = managedRooms.get(roomID);
+            allRooms.remove(roomID);
+            managedRooms.remove(roomID);
+            return deleteRoom;
+        }
+    }
+
+    public void deleteRoomIDFromAll(String roomID) {
+        synchronized(roomsLock) {
+            allRooms.remove(roomID);
+        }
+    }
+
     public Room getManagedRoom(String roomID) {
         return this.managedRooms.get(roomID);
     }
