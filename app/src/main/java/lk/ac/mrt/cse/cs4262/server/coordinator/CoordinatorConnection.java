@@ -159,6 +159,16 @@ public class CoordinatorConnection implements Runnable{
                             send(Util.getJsonString(map));
                             break;
 
+                        case "deleteroom":
+                            String deleteRoomId = jsonObject.get("roomid").getAsString();
+                            String serverId = jsonObject.get("serverid").getAsString();
+                            // deletes the room from its room list
+                            Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
+
+                            // if this is the leader, inform other servers that the room is deleted
+                            if (myServerName.equals(SystemState.getInstance().getLeader())) {
+                                LeaderRoomHandler.getInstance().informAboutDeleteRoom(deleteRoomId, serverId);
+                            }
                         default:
                             break;
                     }

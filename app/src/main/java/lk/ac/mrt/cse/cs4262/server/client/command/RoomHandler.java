@@ -5,6 +5,7 @@ import java.util.*;
 
 import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
+import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
@@ -190,4 +191,46 @@ public class RoomHandler {
         return map;
     }
 
+    public static Boolean handleDeleteRoom(String deleteRoomId, Client client){
+        String clientOwnedRoom = client.getOwnedRoom();
+
+        // client is not the owner of the chat room
+        if (!(deleteRoomId.equals(clientOwnedRoom))) {
+            return false;
+        } else { // client is the owner of the chat room
+            SystemState s = SystemState.getInstance();
+            // if this is not the leader, inform the leader that the room is deleted
+            if (!client.getConnectedServerName().equals(s.getLeader())) {
+                try {
+                    CoordinatorConnector cc = new CoordinatorConnector(
+                            s.getLeaderConfig().getHostIp(),
+                            s.getLeaderConfig().getCoordinatorPort(),
+                            true
+                    );
+
+                    Map<String, Object> leaderMap = new HashMap<>();
+                    leaderMap.put("type", "deleteroom");
+                    leaderMap.put("serverid", client.getConnectedServerName());
+                    leaderMap.put("roomid", deleteRoomId);
+                    cc.sendMessage(Util.getJsonString(leaderMap));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                // if this is the leader, inform other servers that the room is deleted
+                LeaderRoomHandler.getInstance().informAboutDeleteRoom(deleteRoomId, client.getConnectedServerName());
+            }
+            Room deleteRoom = Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
+            client.setOwnedRoom("");
+            List<Client> deletedRoomClientList = new ArrayList<Client>(deleteRoom.getClientList());
+
+            for (Client c : deletedRoomClientList) {
+                Map<String, Object> map = new HashMap<>();
+                map = RoomHandler.handleJoinRoom( "MainHall-" + c.getConnectedServerName(), c);
+                c.send(Util.getJsonString(map));
+            }
+
+            return true;
+        }
+    }
 }

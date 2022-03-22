@@ -180,7 +180,20 @@ public class Client implements Runnable {
                             send(Util.getJsonString(serverChangeMap));
                             send(Util.getJsonString(map));
                             break;
-                        
+
+                        case "deleteroom":
+                            String deleteRoomId = jsonObject.get("roomid").getAsString();
+
+                            map.put("type", "deleteroom");
+                            map.put("roomid", deleteRoomId);
+
+                            Boolean approved = RoomHandler.handleDeleteRoom(deleteRoomId, Client.this);
+
+                            map.put("approved", approved.toString());
+
+                            String message = Util.getJsonString(map);
+                            send(message);
+
                         default:
                             break;
                     }
