@@ -93,7 +93,6 @@ public class CoordinatorConnector implements Runnable{
         try {
             while (!this.socket.isClosed()) {
                 String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
-        
                 if (this.gson == null) {
                     this.gson = new Gson();
                 }
@@ -122,6 +121,11 @@ public class CoordinatorConnector implements Runnable{
 
                         case "answer":
                             LeaderElector.getInstance().updateElectionAnswerMap(connectingServerName);
+                            break;
+                            
+                        case "identityexist":
+                            boolean identityExist = jsonObject.get("exist").getAsBoolean();
+                            map.put("exist", identityExist);
                             break;
                        
                         default:

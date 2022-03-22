@@ -62,17 +62,19 @@ public class HeartbeatMonitor {
     }
 
     public static HeartbeatMonitor getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new HeartbeatMonitor();
+        }
         return instance;
     }
 
     private void initializeLeaderMonitor() {
         checkers = new HashMap<>();
-        for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet())
-            if (!serverName.equals(SystemState.getInstance().getLeader()))
+        for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet()){
+            if (!serverName.equals(SystemState.getInstance().getLeader())){
                 checkers.put(serverName, new Checker(false));
-
+            }
+        }
         failedServers = new ArrayList<>();
         maxPoolSize = SystemState.getInstance().getSystemConfigMap().size() + 5;
         threadPool = Executors.newFixedThreadPool(maxPoolSize);
@@ -142,8 +144,9 @@ public class HeartbeatMonitor {
                             synchronized (checkerLock) {
                                 shouldWait = (serverChecks > 0);
                             }
-                            if (!shouldWait)
+                            if (!shouldWait) {
                                 break;
+                            }
                             try {
                                 Thread.sleep(1000);
                                 timeTick++;
@@ -204,7 +207,7 @@ public class HeartbeatMonitor {
     }
 
     public void acknowledge(String serverName) {
-        System.out.println("acknowledge");
+        System.out.println("acknowledge " + serverName);
         synchronized (checkerLock) {
             if (LeaderElector.getInstance().getLeaderElectorState() instanceof LeaderState) {
                 checkers.get(serverName).setValue(true);
@@ -274,8 +277,9 @@ public class HeartbeatMonitor {
                             synchronized (checkerLock) {
                                 shouldWait = !isLeaderActive;
                             }
-                            if (!shouldWait)
+                            if (!shouldWait) {
                                 break;
+                            }
                             try {
                                 Thread.sleep(1000);
                                 timeTick++;
@@ -304,9 +308,10 @@ public class HeartbeatMonitor {
     }
 
     public void executeMonitor() {
-        if (LeaderElector.getInstance().getLeaderElectorState() instanceof NotLeaderState)
+        if (LeaderElector.getInstance().getLeaderElectorState() instanceof NotLeaderState){
             System.out.println("execute");
             executeSubordinateHeartbeat();
+        }
     }
 
     public void updateFailedServers(List<String> failedList) {
@@ -325,8 +330,9 @@ public class HeartbeatMonitor {
                 map.put(serverName, s.getSystemConfigMap().get(serverName).getIsServerActive());
             }
         }
-        if (!map.isEmpty())
+        if (!map.isEmpty()) {
             return map;
+        }
         return null;
     }
 

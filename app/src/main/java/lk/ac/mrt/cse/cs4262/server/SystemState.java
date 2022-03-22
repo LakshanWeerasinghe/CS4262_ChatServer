@@ -65,6 +65,11 @@ public class SystemState {
     public ServerConfigObj getServerConfig(String serverName){
         return this.systemConfigMap.get(serverName);
     }
+    
+    public int getClientPortOfServer(String serverName) {
+        if (systemConfigMap.containsKey(serverName)) return systemConfigMap.get(serverName).getClientPort();
+        return -1;
+    }
    
     public boolean isLeaderElected(){
         return isLeaderElected.get();
