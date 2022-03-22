@@ -55,5 +55,10 @@ public class SystemState {
         if (systemConfigMap.containsKey(serverName)) return systemConfigMap.get(serverName).getCoordinatorPort();
         return -1;
     }
+
+    public int getClientPortOfServer(String serverName) {
+        if (systemConfigMap.containsKey(serverName)) return systemConfigMap.get(serverName).getClientPort();
+        return -1;
+    }
    
 }

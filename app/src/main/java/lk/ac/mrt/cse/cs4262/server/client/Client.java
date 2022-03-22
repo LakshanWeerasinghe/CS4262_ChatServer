@@ -16,7 +16,7 @@ import com.google.gson.JsonObject;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
-import lk.ac.mrt.cse.cs4262.server.client.command.CreateRoomHandler;
+import lk.ac.mrt.cse.cs4262.server.client.command.RoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
@@ -56,7 +56,7 @@ public class Client implements Runnable {
     public void run() {
 
         try {
-            while (true) {
+            while (!clientSocket.isClosed()) {
                 String bufferedMessage = this.clientInputBuffer.readLine();
 
                 if (this.gson == null) {
@@ -101,7 +101,7 @@ public class Client implements Runnable {
                             map.put("type", "createroom");
                             map.put("roomid", roomID);
 
-                            Room newlyCreatedoom = CreateRoomHandler.handleCreateRoom(roomID, Client.this);
+                            Room newlyCreatedoom = RoomHandler.handleCreateRoom(roomID, Client.this);
                             if (newlyCreatedoom != null) {
                                 map.put("approved", "true");
                                 response = Util.getJsonString(map);
@@ -145,7 +145,7 @@ public class Client implements Runnable {
                             break;
 
                         case "list":
-                            List<String> allRoomsNamesList = CreateRoomHandler.getAllRoomsNames();
+                            List<String> allRoomsNamesList = RoomHandler.getAllRoomsNames();
 
                             map.put("type", "roomlist");
                             map.put("rooms", allRoomsNamesList);
@@ -155,6 +155,32 @@ public class Client implements Runnable {
                             send(roomListMessage);
                             break;
 
+                        case "joinroom":
+                            String roomName = jsonObject.get("roomid").getAsString();
+
+                            map = RoomHandler.handleJoinRoom(roomName, Client.this);
+
+                            send(Util.getJsonString(map));
+                            break;
+
+                        case "movejoin":
+                            String newRoom = jsonObject.get("roomid").getAsString();
+                            String formerRoom = jsonObject.get("former").getAsString();
+
+                            this.clientIdentifier = jsonObject.get("identity").getAsString();
+
+                            map = RoomHandler.handleMoveJoin(newRoom, formerRoom, Client.this);                            
+
+                            Map<String, Object> serverChangeMap = new HashMap<>();
+
+                            serverChangeMap.put("type", "serverchange");
+                            serverChangeMap.put("approved", "true");
+                            serverChangeMap.put("serverid", this.connectedServer);
+
+                            send(Util.getJsonString(serverChangeMap));
+                            send(Util.getJsonString(map));
+                            break;
+                        
                         default:
                             break;
                     }
