@@ -5,6 +5,7 @@ import java.util.*;
 
 import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
+import lk.ac.mrt.cse.cs4262.server.chatRoom.MainHall;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 import lk.ac.mrt.cse.cs4262.server.client.Client;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
@@ -106,6 +107,7 @@ public class RoomHandler {
     }
 
     public static Map<String, Object> handleJoinRoom(String roomID, Client client) {
+        System.out.println("----HANDLE JOIN ROOM----" + roomID + "-----" + client.getClientIdentifier());
         boolean canJoin = false;
         Map<String, Object> map = new HashMap<>();
         // first check if roomID exists
@@ -125,6 +127,7 @@ public class RoomHandler {
         } else {
             // change room right away if the room is managed by this server
             if (Store.getInstance().isManagedRoom(roomID)) {
+                System.out.println("---CAN JOINING AND JOINING----" + client.getClientIdentifier());
                 Room formerRoom = client.getRoom();
                 formerRoom.removeClientFromRoom(client);
                 Room changedRoom = Store.getInstance().getManagedRoom(roomID);
@@ -135,6 +138,8 @@ public class RoomHandler {
                 map.put("identity", client.getClientIdentifier());
                 map.put("former", formerRoom.getRoomName());
                 map.put("roomid", roomID);
+                System.out.println("---FORMER ROOM----" + formerRoom.getRoomName());
+                System.out.println("---CHANGED ROOM----" + changedRoom.getRoomName() + "---OR----" + roomID);
 
                 formerRoom.broadcast(client, Util.getJsonString(map));
                 changedRoom.broadcast(client, Util.getJsonString(map));
@@ -190,4 +195,49 @@ public class RoomHandler {
         return map;
     }
 
+    public static Boolean handleDeleteRoom(String deleteRoomId, Client client){
+        String clientOwnedRoom = client.getOwnedRoom();
+
+        // client is not the owner of the chat room
+        if (!(deleteRoomId.equals(clientOwnedRoom))) {
+            System.out.println("----CLIENT IS NOT THE OWNER-----");
+            return false;
+        } else { // client is the owner of the chat room
+            System.out.println("----CLIENT IS THE OWNER-----");
+            SystemState s = SystemState.getInstance();
+            // if this is not the leader, inform the leader that the room is deleted
+            if (!client.getConnectedServerName().equals(s.getLeader())) {
+                try {
+                    CoordinatorConnector cc = new CoordinatorConnector(
+                            s.getLeaderConfig().getHostIp(),
+                            s.getLeaderConfig().getCoordinatorPort(),
+                            true
+                    );
+
+                    Map<String, Object> leaderMap = new HashMap<>();
+                    leaderMap.put("type", "deleteroom");
+                    leaderMap.put("serverid", client.getConnectedServerName());
+                    leaderMap.put("roomid", deleteRoomId);
+                    cc.sendMessage(Util.getJsonString(leaderMap));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                // if this is the leader, inform other servers that the room is deleted
+                LeaderRoomHandler.getInstance().informAboutDeleteRoom(deleteRoomId, client.getConnectedServerName());
+            }
+            Room deleteRoom = Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
+            client.setOwnedRoom("");
+            List<Client> deletedRoomClientList = deleteRoom.getClientList();
+            for (Client c : deletedRoomClientList) {
+                System.out.println("----CLIENT LIST----" + c.getClientIdentifier());
+            }
+            for (Client c : deletedRoomClientList) {
+                Map<String, Object> map = new HashMap<>();
+                map = RoomHandler.handleJoinRoom( "MainHall-" + c.getConnectedServerName(), c);
+                c.send(Util.getJsonString(map));
+            }
+            return true;
+        }
+    }
 }
