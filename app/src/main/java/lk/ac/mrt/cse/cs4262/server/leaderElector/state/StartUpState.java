@@ -34,18 +34,19 @@ public class StartUpState extends LeaderElectorState{
 
     private void sendElectionMessages(){
         getLeaderElector().setElectionAnswerMap(new HashMap<>());
+        getLeaderElector().setNoOneAnswered(true);
         SystemState.getInstance().getSystemConfigMap().values().forEach(
             x -> {
                 if(x.getPriority() > getLeaderElector().getMyConfig().getPriority() 
                         && x.getName() != getLeaderElector().getMyConfig().getName()){
                     try {
-                        getLeaderElector().getElectionAnswerMap().put(x.getName(), false);
                         CoordinatorConnector highPriorityServerConnector = 
                                                 new CoordinatorConnector(x.getHostIp(), x.getCoordinatorPort(), true)
                                                 .setConnectingServerName(x.getName());
                         Thread highPriorityServerConnectorThread = new Thread(highPriorityServerConnector);
                         highPriorityServerConnector.sendMessage(electionMsg);
                         highPriorityServerConnectorThread.start();
+                        getLeaderElector().getElectionAnswerMap().put(x.getName(), false);
                     } catch (IOException e) {
                         log.error("error sending election msg to server {}", x.getName());
                         log.error("error is {}", e.getMessage());
@@ -96,6 +97,11 @@ public class StartUpState extends LeaderElectorState{
                 break;
         }
         
+    }
+
+    @Override
+    public String toString() {
+        return "Startup State";
     }
     
 }

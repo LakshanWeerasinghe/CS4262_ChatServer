@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
+import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
@@ -73,13 +74,18 @@ public class LeaderState extends LeaderElectorState{
             case EventConstants.SEND_COORDINATOR:
                 updateLeader(owner);
                 sendCoordinatorMsg();
-                Server.getInstance().startHeartbeatMonitor();
+                HeartbeatMonitor.getInstance().startHeartbeatMonitor(Server.getInstance().getServerName());
                 break;
 
             default:
                 break;
         }
         
+    }
+
+    @Override
+    public String toString() {
+        return "Leader State";
     }
     
 }

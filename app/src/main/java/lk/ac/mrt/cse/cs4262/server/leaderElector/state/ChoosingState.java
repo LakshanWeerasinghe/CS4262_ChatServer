@@ -116,5 +116,11 @@ public class ChoosingState extends LeaderElectorState{
         }
         
     }
+
+    @Override
+    public String toString() {
+        return "Choosing State";
+    }
+    
     
 }

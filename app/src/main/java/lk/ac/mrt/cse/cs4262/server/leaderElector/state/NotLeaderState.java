@@ -2,6 +2,7 @@ package lk.ac.mrt.cse.cs4262.server.leaderElector.state;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
+import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElector;
@@ -27,7 +28,7 @@ public class NotLeaderState extends LeaderElectorState{
 
             case EventConstants.RECEIVE_COORDINATOR:
                 updateLeader(owner);
-                Server.getInstance().startHeartbeatMonitor();
+                HeartbeatMonitor.getInstance().startHeartbeatMonitor(Server.getInstance().getServerName());
                 break;
 
             case EventConstants.T1_EXPIRED:
@@ -40,6 +41,11 @@ public class NotLeaderState extends LeaderElectorState{
             
         }
         
+    }
+
+    @Override
+    public String toString() {
+        return "Not Leader State";
     }
     
 }

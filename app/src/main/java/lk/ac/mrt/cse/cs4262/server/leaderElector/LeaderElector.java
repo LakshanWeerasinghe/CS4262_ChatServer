@@ -95,6 +95,10 @@ public class LeaderElector {
     public void setOwnerThread(LeaderElectionHandler ownerThread) {
         this.ownerThread = ownerThread;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "LeaderElector [leaderElectorState=" + leaderElectorState + "]";
+    }
+        
 }

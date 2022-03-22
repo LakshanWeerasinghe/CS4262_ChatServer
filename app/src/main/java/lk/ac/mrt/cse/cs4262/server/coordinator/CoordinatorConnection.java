@@ -47,7 +47,6 @@ public class CoordinatorConnection implements Runnable{
     }
 
     private void createInputBuffer(Socket coordinatorSocket){
-        log.info("create coordinator input buffer for {}", coordinatorSocket);
         try {
             this.coordinatorInputBuffer = new BufferedReader(new InputStreamReader(
                     this.coordinatorSocket.getInputStream(), "utf-8"));
@@ -58,7 +57,6 @@ public class CoordinatorConnection implements Runnable{
     }
 
     private void createOutputBuffer(Socket coordinatorSocket){
-        log.info("create coordinator output buffer for {}", coordinatorSocket);
         try {
             this.coordinatorOutputBuffer = new DataOutputStream(this.coordinatorSocket.getOutputStream());
         } catch (Exception e) {
@@ -83,7 +81,8 @@ public class CoordinatorConnection implements Runnable{
                     JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
 
                     String messageType = jsonObject.get("type").getAsString();
-                    System.out.println(jsonObject);
+                    log.info("recived message {} from server with ip {} on {}", jsonObject, 
+                                coordinatorSocket.getRemoteSocketAddress(), coordinatorSocket.getPort());
 
                     Map<String, Object> map = new HashMap<>();
                     String roomID, serverName;
@@ -135,6 +134,7 @@ public class CoordinatorConnection implements Runnable{
                         case "election":
                             map.put("type", "answer");
                             send(Util.getJsonString(map));
+                            HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
                             SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
@@ -142,6 +142,7 @@ public class CoordinatorConnection implements Runnable{
                             break;
                         
                         case "nomination":
+                            HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
                             SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
@@ -149,6 +150,7 @@ public class CoordinatorConnection implements Runnable{
                             break;
                         
                         case "coordinator":
+                            HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
                             SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);

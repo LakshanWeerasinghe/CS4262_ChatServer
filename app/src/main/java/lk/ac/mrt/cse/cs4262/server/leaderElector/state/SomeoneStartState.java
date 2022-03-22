@@ -43,5 +43,10 @@ public class SomeoneStartState extends LeaderElectorState{
                 break;
         }
     }
+
+    @Override
+    public String toString() {
+        return "SomeoneStartState State";
+    }
     
 }

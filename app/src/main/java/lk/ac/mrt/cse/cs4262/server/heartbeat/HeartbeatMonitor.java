@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
@@ -18,6 +22,8 @@ import lk.ac.mrt.cse.cs4262.server.leaderElector.state.NotLeaderState;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
 public class HeartbeatMonitor {
+
+    private static final Logger log = LoggerFactory.getLogger(HeartbeatMonitor.class);
 
     private final Object configLock = new Object();
     private final Object checkerLock = new Object();
@@ -40,6 +46,9 @@ public class HeartbeatMonitor {
 
     private boolean subordinateStarted;
     private boolean isLeaderActive;
+
+    private Thread subordinateHeatbeatMonitorThread = null;
+    private Thread leaderHeatbeatMonitorThread = null;
 
     // private boolean iamLeader;
 
@@ -80,8 +89,10 @@ public class HeartbeatMonitor {
     }
 
     public void startHeartbeatMonitor(String serverName) {
+        log.info("start heartbeat moinering");
         if (serverName.equals(SystemState.getInstance().getLeader())) {
             initializeLeaderMonitor();
+            interuptSubordinateHeartBeatMonitorThread();
             startLeaderHeartbeat();
         } else {
             initializeSubordinateMonitor();
@@ -89,7 +100,7 @@ public class HeartbeatMonitor {
     }
 
     private void startLeaderHeartbeat() {
-        new Thread(new Runnable() {
+        leaderHeatbeatMonitorThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (LeaderElector.getInstance().getLeaderElectorState() instanceof LeaderState) {
@@ -105,7 +116,8 @@ public class HeartbeatMonitor {
                         }
                         // send heartbeat checking messages to all subordinate servers
                         for (String serverName : SystemState.getInstance().getSystemConfigMap().keySet()) {
-                            if (!serverName.equals(SystemState.getInstance().getLeader())) {
+                            if (!serverName.equals(SystemState.getInstance().getLeader()) &&
+                                    SystemState.getInstance().getSystemConfigMap().get(serverName).getIsServerActive()) {
                                 try {
                                     CoordinatorConnector cc = new CoordinatorConnector(
                                             SystemState.getInstance().getIPOfServer(serverName),
@@ -118,7 +130,8 @@ public class HeartbeatMonitor {
                                     }
 
                                 } catch (IOException e) {
-                                    e.printStackTrace();
+                                    log.error("cannot connect to subordinate server {} for heartbeat", serverName);
+                                    log.error("error is {}", e.getMessage());
                                 }
                             }
                         }
@@ -135,7 +148,8 @@ public class HeartbeatMonitor {
                                 Thread.sleep(1000);
                                 timeTick++;
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                log.error("subordinates heartbeat thread interupted while waiting for reply");
+                                log.error("error is {}", e.getMessage());
                             }
                         }
                         boolean failureExists = false;
@@ -168,7 +182,9 @@ public class HeartbeatMonitor {
                                                 true);
                                         cc.sendMessage(message);
                                     } catch (IOException e) {
-                                        e.printStackTrace();
+                                        log.error("cannot connect to subordinate server {} to update about heartbeat " 
+                                                    + "faiuler", serverName);
+                                        log.error("error is {}", e.getMessage());
                                     }
                                 }
                             }
@@ -177,13 +193,14 @@ public class HeartbeatMonitor {
                     try {
                         Thread.sleep(LEADER_INTERVAL);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        log.error("subordinates heartbeat thread interupted while sleeping");
+                        log.error("error is {}", e.getMessage());
                     }
 
                 }
             }
-        }).start();
-        ;
+        });
+        leaderHeatbeatMonitorThread.start();
     }
 
     public void acknowledge(String serverName) {
@@ -219,7 +236,7 @@ public class HeartbeatMonitor {
         if (!subordinateStarted) {
             subordinateStarted = true;
 
-            new Thread(new Runnable() {
+            subordinateHeatbeatMonitorThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     while (subordinateStarted) {
@@ -246,7 +263,9 @@ public class HeartbeatMonitor {
                             threadPool.execute(cc);
                             cc.sendMessage(checkingMessage);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            log.error("cannot connect to leader server {} for heartbeat", 
+                                        SystemState.getInstance().getLeaderConfig().getName());
+                            log.error("error is {}", e.getMessage());
                         }
                         // wait for the leader to reply
                         timeTick = 0;
@@ -261,13 +280,14 @@ public class HeartbeatMonitor {
                                 Thread.sleep(1000);
                                 timeTick++;
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                log.error("leader heartbeat thread interupted while waiting for reply");
+                                log.error("error is {}", e.getMessage());
                             }
                         }
                         // if leader is inactive, stop monitor and start leader election
                         if (!isLeaderActive) {
                             subordinateStarted = false;
-                            System.out.println("Starting Leader Election");
+                            log.info("leader election started by server {}", Server.getInstance().getServerName());
 
                             SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
@@ -276,8 +296,10 @@ public class HeartbeatMonitor {
                             leaderElectionHandler.start();
                         }
                     }
+                    interuptSubordinateHeartBeatMonitorThread();
                 }
-            }).start();
+            });
+            subordinateHeatbeatMonitorThread.start();
         }
     }
 
@@ -316,5 +338,20 @@ public class HeartbeatMonitor {
         this.subordinateStarted = subordinateStarted;
     }
 
+    public void interuptSubordinateHeartBeatMonitorThread(){
+        if(subordinateHeatbeatMonitorThread != null){
+            log.info("interupt the subordinate heartbeat monitering thread");
+            subordinateHeatbeatMonitorThread.interrupt();
+            subordinateHeatbeatMonitorThread = null;
+        }
+    }
+
+    public void interuptLeaderHeartBeatMonitorThread(){
+        if(leaderHeatbeatMonitorThread != null){
+            log.info("interupt the leader heartbeat monitering thread");
+            leaderHeatbeatMonitorThread.interrupt();
+            leaderHeatbeatMonitorThread = null;
+        }
+    }
     
 }

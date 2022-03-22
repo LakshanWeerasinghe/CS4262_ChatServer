@@ -1,6 +1,11 @@
 package lk.ac.mrt.cse.cs4262.server.leaderElector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class LeaderElectionHandler extends Thread{
+
+    private static final Logger log = LoggerFactory.getLogger(LeaderElectionHandler.class);
 
     private Thread currentThread = null;
     private final String event;
@@ -20,8 +25,9 @@ public class LeaderElectionHandler extends Thread{
                                 .getLeaderElectorState()
                                 .dispatchEvent(event, this);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error("thread interupted executing initial event {}", event);
             }
+            break;
         }
     }
 

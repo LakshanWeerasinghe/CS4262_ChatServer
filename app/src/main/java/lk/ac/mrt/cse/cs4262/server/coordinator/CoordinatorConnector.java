@@ -29,15 +29,11 @@ public class CoordinatorConnector implements Runnable{
     private String connectingServerName;
 
     public CoordinatorConnector(String ip, int port) throws IOException{
-        log.info("start to make a connection with server on ip {} port {}", ip, port);
         this.socket = new Socket(ip, port);
-        log.info("successfully connected to the server on ip {} port {}", ip, port);
     }
 
     public CoordinatorConnector(String ip, int port, boolean createBuffers) throws IOException{
-        log.info("start to make a connection with server on ip {} port {}", ip, port);
         this.socket = new Socket(ip, port);
-        log.info("successfully connected to the server on ip {} port {}", ip, port);
         if (createBuffers) {
             createInputBuffer(socket);
             createOutputBuffer(socket);
@@ -55,7 +51,6 @@ public class CoordinatorConnector implements Runnable{
     }
 
     private void createInputBuffer(Socket coordinatorSocket){
-        log.info("create coordinator input buffer for {}", coordinatorSocket);
         try {
             this.coordinatorInputBuffer = new BufferedReader(new InputStreamReader(
                     this.socket.getInputStream(), "utf-8"));
@@ -66,7 +61,6 @@ public class CoordinatorConnector implements Runnable{
     }
 
     private void createOutputBuffer(Socket coordinatorSocket){
-        log.info("create coordinator output buffer for {}", coordinatorSocket);
         try {
             this.coordinatorOutputBuffer = new DataOutputStream(this.socket.getOutputStream());
         } catch (Exception e) {

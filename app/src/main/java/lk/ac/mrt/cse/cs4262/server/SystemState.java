@@ -48,7 +48,7 @@ public class SystemState {
     }
 
     public ServerConfigObj getLeaderConfig() {
-        if (systemConfigMap != null) return systemConfigMap.get(leader);
+        if (systemConfigMap != null && leader != null) return systemConfigMap.get(leader);
         return null;
     }
 
