@@ -215,6 +215,7 @@ public class Client implements Runnable {
         try {
             clientOutputBuffer.write((value + "\n").getBytes("UTF-8"));
             clientOutputBuffer.flush();
+            System.out.println("-----SENT DATA-----");
         } catch (IOException e1) {
             e1.printStackTrace();
             System.exit(1);

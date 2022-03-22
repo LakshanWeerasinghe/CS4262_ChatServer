@@ -228,15 +228,18 @@ public class RoomHandler {
             }
             Room deleteRoom = Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
             client.setOwnedRoom("");
-            List<Client> deletedRoomClientList = deleteRoom.getClientList();
+            List<Client> deletedRoomClientList = new ArrayList<Client>(deleteRoom.getClientList());
             for (Client c : deletedRoomClientList) {
                 System.out.println("----CLIENT LIST----" + c.getClientIdentifier());
             }
             for (Client c : deletedRoomClientList) {
+                System.out.println("----FOR LOOP CLIENT LIST----" + c.getClientIdentifier());
                 Map<String, Object> map = new HashMap<>();
                 map = RoomHandler.handleJoinRoom( "MainHall-" + c.getConnectedServerName(), c);
                 c.send(Util.getJsonString(map));
+                System.out.println("----SENT DATA FOR LOOP----" + c.getClientIdentifier() + "--LEN---" + deletedRoomClientList.size());
             }
+
             return true;
         }
     }
