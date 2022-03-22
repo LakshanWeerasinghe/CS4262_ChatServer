@@ -107,7 +107,6 @@ public class RoomHandler {
     }
 
     public static Map<String, Object> handleJoinRoom(String roomID, Client client) {
-        System.out.println("----HANDLE JOIN ROOM----" + roomID + "-----" + client.getClientIdentifier());
         boolean canJoin = false;
         Map<String, Object> map = new HashMap<>();
         // first check if roomID exists
@@ -127,7 +126,6 @@ public class RoomHandler {
         } else {
             // change room right away if the room is managed by this server
             if (Store.getInstance().isManagedRoom(roomID)) {
-                System.out.println("---CAN JOINING AND JOINING----" + client.getClientIdentifier());
                 Room formerRoom = client.getRoom();
                 formerRoom.removeClientFromRoom(client);
                 Room changedRoom = Store.getInstance().getManagedRoom(roomID);
@@ -138,8 +136,6 @@ public class RoomHandler {
                 map.put("identity", client.getClientIdentifier());
                 map.put("former", formerRoom.getRoomName());
                 map.put("roomid", roomID);
-                System.out.println("---FORMER ROOM----" + formerRoom.getRoomName());
-                System.out.println("---CHANGED ROOM----" + changedRoom.getRoomName() + "---OR----" + roomID);
 
                 formerRoom.broadcast(client, Util.getJsonString(map));
                 changedRoom.broadcast(client, Util.getJsonString(map));
@@ -200,10 +196,8 @@ public class RoomHandler {
 
         // client is not the owner of the chat room
         if (!(deleteRoomId.equals(clientOwnedRoom))) {
-            System.out.println("----CLIENT IS NOT THE OWNER-----");
             return false;
         } else { // client is the owner of the chat room
-            System.out.println("----CLIENT IS THE OWNER-----");
             SystemState s = SystemState.getInstance();
             // if this is not the leader, inform the leader that the room is deleted
             if (!client.getConnectedServerName().equals(s.getLeader())) {
@@ -229,15 +223,11 @@ public class RoomHandler {
             Room deleteRoom = Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
             client.setOwnedRoom("");
             List<Client> deletedRoomClientList = new ArrayList<Client>(deleteRoom.getClientList());
+
             for (Client c : deletedRoomClientList) {
-                System.out.println("----CLIENT LIST----" + c.getClientIdentifier());
-            }
-            for (Client c : deletedRoomClientList) {
-                System.out.println("----FOR LOOP CLIENT LIST----" + c.getClientIdentifier());
                 Map<String, Object> map = new HashMap<>();
                 map = RoomHandler.handleJoinRoom( "MainHall-" + c.getConnectedServerName(), c);
                 c.send(Util.getJsonString(map));
-                System.out.println("----SENT DATA FOR LOOP----" + c.getClientIdentifier() + "--LEN---" + deletedRoomClientList.size());
             }
 
             return true;

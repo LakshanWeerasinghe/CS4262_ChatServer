@@ -56,7 +56,6 @@ public class Room {
         public void run() {
             for (Client client : clientList) {
                 if (!client.equals(sender)) {
-                    System.out.println("----BROADCAST SENDING MSG TO----" + client.getClientIdentifier());
                     client.send(message);
                 }
             }
