@@ -1,6 +1,7 @@
 package lk.ac.mrt.cse.cs4262.server.leader;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -28,11 +29,34 @@ public class LeaderRoomHandler {
     }
 
     public boolean handleCreateRoom(String roomID, String serverName) {
-        if (!Store.getInstance().roomIDExist(roomID)) {
-            Store.getInstance().addRoom(roomID, serverName);
-            return false;
+        // first check whether all servers a live as known locally
+        if (SystemState.getInstance().allServerActive()) {
+            // check whether all servers are actually live at the moment
+            boolean allActive = true;
+            SystemState s = SystemState.getInstance();
+            String leaderServer = s.getLeader();
+
+            for (String otherServerName : SystemState.getInstance().getSystemConfigMap().keySet()) {
+                if (!(otherServerName.equals(leaderServer) || otherServerName.equals(serverName))) {
+                    try {
+                        Socket socket = new Socket(
+                                s.getIPOfServer(otherServerName),
+                                s.getCoordinatorPortOfServer(otherServerName));
+                        socket.close();
+                    } catch (IOException e) {                        
+                        allActive = false;
+                    }
+                }
+            }
+            if (allActive) {
+                if (!Store.getInstance().roomIDExist(roomID)) {
+                    Store.getInstance().addRoom(roomID, serverName);
+                    return false;
+                }
+                Store.getInstance().removeRoomIDFromTmp(roomID);
+                return true;
+            }
         }
-        Store.getInstance().removeRoomIDFromTmp(roomID);
         return true;
     }
 
@@ -52,10 +76,9 @@ public class LeaderRoomHandler {
                     public void run() {
                         try {
                             CoordinatorConnector cc = new CoordinatorConnector(
-                                s.getIPOfServer(otherServerName), 
-                                s.getCoordinatorPortOfServer(otherServerName),
-                                true
-                            );
+                                    s.getIPOfServer(otherServerName),
+                                    s.getCoordinatorPortOfServer(otherServerName),
+                                    true);
                             cc.sendMessage(Util.getJsonString(map));
                         } catch (IOException e) {
                             e.printStackTrace();

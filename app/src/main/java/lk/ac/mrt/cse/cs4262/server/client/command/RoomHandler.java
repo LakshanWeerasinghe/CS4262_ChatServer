@@ -20,54 +20,68 @@ public class RoomHandler {
     public RoomHandler() {
     }
 
+    private static boolean checkValidity(String roomID) {
+        if(roomID.length() < 3 || roomID.length() > 16) {
+            return false;
+        } else if(!roomID.matches("^[a-zA-Z0-9]*$")) {
+            return false;
+        } else if(!String.valueOf(roomID.charAt(0)).matches("^[a-zA-Z0-9]*$")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     public static Room handleCreateRoom(String roomID, Client client) {
         Room room = null;
-        // first assume roomID exists
-        boolean roomIDExists = true;
-        // then check if roomID actually exist locally
-        if (!Store.getInstance().roomIDExist(roomID) && client.getOwnedRoom().equals("")) {
-            // roomID does not exist locally
-            roomIDExists = false;
-            // if this is not the leader, ask the leader
-            SystemState s = SystemState.getInstance();
-            if (!client.getConnectedServerName().equals(s.getLeader())) {
-                try {
-                    CoordinatorConnector cc = new CoordinatorConnector(
-                        s.getLeaderConfig().getHostIp(), 
-                        s.getLeaderConfig().getCoordinatorPort(),
-                        true
-                    );
+        // do only if all servers are live
+        if (checkValidity(roomID) && SystemState.getInstance().allServerActive()) {
+            // first assume roomID exists
+            boolean roomIDExists = true;
+            // then check if roomID actually exist locally
+            if (!Store.getInstance().roomIDExist(roomID) && client.getOwnedRoom().equals("")) {
+                // roomID does not exist locally
+                roomIDExists = false;
+                // if this is not the leader, ask the leader
+                SystemState s = SystemState.getInstance();
+                if (!client.getConnectedServerName().equals(s.getLeader())) {
+                    try {
+                        CoordinatorConnector cc = new CoordinatorConnector(
+                                s.getLeaderConfig().getHostIp(),
+                                s.getLeaderConfig().getCoordinatorPort(),
+                                true);
 
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("type", "checkroomexist");
-                    map.put("roomid", roomID);
-                    map.put("serverid", client.getConnectedServerName());
-                    cc.sendMessage(Util.getJsonString(map));
-
-                    Boolean b = (Boolean) cc.handleMessage().get("exist");
-                    roomIDExists = b.booleanValue();
-
-                    map.clear();
-                    map.put("type", "createroomack");
-
-                    if (!roomIDExists) {
-                        room = new Room(roomID, client);
-                        Store.getInstance().addManagedRoom(roomID, client.getConnectedServerName(), room);
-                        map.put("created", true);
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("type", "checkroomexist");
                         map.put("roomid", roomID);
-                        map.put("serverid", client.getConnectedServerName());                        
-                    } else {
-                        map.put("created", false);
+                        map.put("serverid", client.getConnectedServerName());
+                        cc.sendMessage(Util.getJsonString(map));
+
+                        Boolean b = (Boolean) cc.handleMessage().get("exist");
+                        roomIDExists = b.booleanValue();
+
+                        map.clear();
+                        map.put("type", "createroomack");
+
+                        if (!roomIDExists) {
+                            room = new Room(roomID, client);
+                            Store.getInstance().addManagedRoom(roomID, client.getConnectedServerName(), room);
+                            map.put("created", true);
+                            map.put("roomid", roomID);
+                            map.put("serverid", client.getConnectedServerName());
+                        } else {
+                            map.put("created", false);
+                        }
+                        cc.sendMessage(Util.getJsonString(map));
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    cc.sendMessage(Util.getJsonString(map));
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } else {
+                    room = new Room(roomID, client);
+                    Store.getInstance().addManagedRoom(roomID, client.getConnectedServerName(), room);
+                    LeaderRoomHandler.getInstance().informAboutNewRoom(roomID, client.getConnectedServerName());
                 }
-            } else {
-                room = new Room(roomID, client);
-                Store.getInstance().addManagedRoom(roomID, client.getConnectedServerName(), room);
-                LeaderRoomHandler.getInstance().informAboutNewRoom(roomID, client.getConnectedServerName());
-            }        
+            }
         }
         return room;
     }
@@ -77,7 +91,8 @@ public class RoomHandler {
         Set<String> allRoomsNamesSet = new HashSet<>(allRooms.keySet());
 
         // adding MainHall rooms of live servers
-        List<ServerConfigObj> serverConfigurations = new ArrayList<ServerConfigObj>(SystemState.getInstance().getSystemConfigMap().values());
+        List<ServerConfigObj> serverConfigurations = new ArrayList<ServerConfigObj>(
+                SystemState.getInstance().getSystemConfigMap().values());
         List<String> liveServerNames = new ArrayList<String>();
         for (ServerConfigObj serverConfigObj : serverConfigurations) {
             if (serverConfigObj.getIsServerActive() == true) {
@@ -115,7 +130,7 @@ public class RoomHandler {
                 Room changedRoom = Store.getInstance().getManagedRoom(roomID);
                 changedRoom.addClientToRoom(client);
                 client.setRoom(changedRoom);
-                
+
                 map.put("type", "roomchange");
                 map.put("identity", client.getClientIdentifier());
                 map.put("former", formerRoom.getRoomName());
@@ -163,7 +178,7 @@ public class RoomHandler {
         if (Store.getInstance().isManagedRoom(roomID)) {
             room = Store.getInstance().getManagedRoom(roomID);
         } else {
-            room = Store.getInstance().getManagedRoom("MainHall-"+client.getConnectedServerName());
+            room = Store.getInstance().getManagedRoom("MainHall-" + client.getConnectedServerName());
         }
         room.addClientToRoom(client);
         client.setRoom(room);
@@ -171,7 +186,7 @@ public class RoomHandler {
         map.put("roomid", room.getRoomName());
 
         room.broadcast(client, Util.getJsonString(map));
-        
+
         return map;
     }
 
