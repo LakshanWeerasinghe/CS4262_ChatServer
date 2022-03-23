@@ -14,7 +14,11 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lk.ac.mrt.cse.cs4262.server.Server;
+import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 import lk.ac.mrt.cse.cs4262.server.client.command.RoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
@@ -31,6 +35,9 @@ public class Client implements Runnable {
     private Room room;
     private String connectedServer;
     private String ownedRoom;
+    private boolean clientClosed;
+
+    private static final Logger log = LoggerFactory.getLogger(Client.class);
 
     public Client(Socket clientSocket, Server server) {
         this.clientSocket = clientSocket;
@@ -54,8 +61,8 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
-
         try {
+            clientClosed = false;
             while (!clientSocket.isClosed()) {
                 String bufferedMessage = this.clientInputBuffer.readLine();
 
@@ -193,6 +200,13 @@ public class Client implements Runnable {
 
                             String message = Util.getJsonString(map);
                             send(message);
+                            break;
+
+                        case "quit":
+                            map = closeClient();
+                            send(Util.getJsonString(map));
+                            clientSocket.close();
+                            break;
 
                         default:
                             break;
@@ -203,10 +217,11 @@ public class Client implements Runnable {
                 // handle the messge accordingly
             }
         } catch (SocketException e) {
-            System.out.println("Client connection interupted");
-            // remove the client name from the store
+            log.error("Client connection interupted");            
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (!clientClosed) closeClient();
         }
 
     }
@@ -247,5 +262,26 @@ public class Client implements Runnable {
 
     public String getOwnedRoom() {
         return this.ownedRoom;
+    }
+
+    private Map<String, Object> closeClient() {
+        Store.getInstance().removeClient(this.clientIdentifier);
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("type", "roomchange");
+        map.put("former", this.room.getRoomName());
+        map.put("roomid", "");
+        map.put("identity", this.clientIdentifier);
+
+        this.room.broadcast(Client.this, Util.getJsonString(map));
+        this.room.removeClientFromRoom(Client.this);
+
+        RoomHandler.handleDeleteRoom(this.room.getRoomName(), Client.this);
+
+        clientClosed = true;
+
+        log.info("Client Closed!");
+
+        return map;
     }
 }
