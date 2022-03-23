@@ -52,6 +52,12 @@ public class Store {
         }
     }
 
+    public void removeClient(String identity){
+        synchronized(localClientsLock){
+            localClients.remove(identity);
+        }
+    }
+
     public void removeClientIdentityFromTmp(String identity){
         synchronized(localClientsLock){
             localTmpClients.remove(identity);
@@ -95,4 +101,15 @@ public class Store {
     }
 
     public Map<String, String> getAllRooms() { return this.allRooms; }
+
+    public void deleteChatRoom(String identity) {
+        synchronized(roomsLock) {
+            for (String key : managedRooms.keySet()) {
+                Room room = managedRooms.get(key);
+                if (room.getOwner().getClientIdentifier().equalsIgnoreCase(identity)) {
+                    managedRooms.remove(key);
+                }
+            }
+        }
+    }
 }
