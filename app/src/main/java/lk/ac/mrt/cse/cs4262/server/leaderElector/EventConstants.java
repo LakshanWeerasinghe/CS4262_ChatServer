@@ -12,6 +12,10 @@ public class EventConstants {
     public static final String RECEIVE_COORDINATOR = "RECEIVE_COORDINATOR";
     public static final String SEND_COORDINATOR = "SEND_COORDINATOR";
 
+    public static final String START_RECOVERY = "START_RECOVERY";
+    public static final String RECOVER_AS_LEADER = "RECOVER_AS_LEADER";
+    public static final String RECOVER_AS_NOT_LEADER = "RECOVER_AS_NOT_LEADER";
+
 
     public static final String T1_EXPIRED = "T1_EXPIRED";
     public static final String T2_EXPIRED = "T2_EXPIRED";
