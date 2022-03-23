@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -127,6 +128,11 @@ public class CoordinatorConnector implements Runnable{
                         case "identityexist":
                             boolean identityExist = jsonObject.get("exist").getAsBoolean();
                             map.put("exist", identityExist);
+                            break;
+
+                        case "view":
+                            List<String> liveServerNames = (List<String>) jsonObject.get("live_servers");
+                            map.put("liveServerNames", liveServerNames);
                             break;
                        
                         default:

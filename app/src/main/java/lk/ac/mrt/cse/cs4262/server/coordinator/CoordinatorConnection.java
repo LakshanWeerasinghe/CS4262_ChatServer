@@ -194,6 +194,12 @@ public class CoordinatorConnection implements Runnable{
                             if (myServerName.equals(SystemState.getInstance().getLeader())) {
                                 LeaderRoomHandler.getInstance().informAboutDeleteRoom(deleteRoomId, serverId);
                             }
+                            break;
+
+                        case "iamup":
+                            // send view messages
+                            break;
+
                         default:
                             break;
                     }
