@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
+import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 import lk.ac.mrt.cse.cs4262.server.client.command.RoomHandler;
 import lk.ac.mrt.cse.cs4262.server.client.command.NewIdentityHandler;
@@ -193,6 +194,13 @@ public class Client implements Runnable {
 
                             String message = Util.getJsonString(map);
                             send(message);
+                            break;
+
+                        case "quit":
+                            removeClientName(clientIdentifier);
+                            deleteChatRoom(clientIdentifier);
+                            clientSocket.close();
+                            break;
 
                         default:
                             break;
@@ -205,10 +213,21 @@ public class Client implements Runnable {
         } catch (SocketException e) {
             System.out.println("Client connection interupted");
             // remove the client name from the store
+            removeClientName(clientIdentifier);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private void deleteChatRoom(String identity) {
+        Store store = Store.getInstance();
+        store.deleteChatRoom(identity);
+    }
+
+    private void removeClientName(String identity) {
+        Store store = Store.getInstance();
+        store.removeClient(identity);
     }
 
     public void send(String value) {
