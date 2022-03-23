@@ -13,11 +13,6 @@ public class NotLeaderState extends LeaderElectorState{
         super(leaderElector);
     }
 
-    private void updateLeader(LeaderElectionHandler owner){
-        SystemState.getInstance().setLeader(owner.getCoordinatingServerName());
-        SystemState.getInstance().updateLeaderElectionStatus(true);
-    }
-
     @Override
     public void dispatchEvent(String event, LeaderElectionHandler owner) throws InterruptedException {
         switch(event){
@@ -27,7 +22,7 @@ public class NotLeaderState extends LeaderElectorState{
                 break;
 
             case EventConstants.RECEIVE_COORDINATOR:
-                updateLeader(owner);
+                SystemState.getInstance().setLeader(owner.getCoordinatingServerName());
                 HeartbeatMonitor.getInstance().startHeartbeatMonitor(Server.getInstance().getServerName());
                 break;
 

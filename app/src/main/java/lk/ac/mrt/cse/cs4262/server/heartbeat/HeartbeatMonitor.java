@@ -98,6 +98,7 @@ public class HeartbeatMonitor {
             startLeaderHeartbeat();
         } else {
             initializeSubordinateMonitor();
+            executeMonitor();
         }
     }
 
@@ -293,7 +294,8 @@ public class HeartbeatMonitor {
                             subordinateStarted = false;
                             log.info("leader election started by server {}", Server.getInstance().getServerName());
 
-                            SystemState.getInstance().updateLeaderElectionStatus(false);
+                            SystemState.getInstance().getSystemConfigMap()
+                                .get(SystemState.getInstance().getLeader()).setIsServerActive(false);
                             SystemState.getInstance().setLeader(null);
                             LeaderElectionHandler leaderElectionHandler = 
                                     new LeaderElectionHandler(EventConstants.T1_EXPIRED, null);

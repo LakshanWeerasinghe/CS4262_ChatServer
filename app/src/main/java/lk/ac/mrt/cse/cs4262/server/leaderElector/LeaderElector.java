@@ -10,9 +10,7 @@ import lk.ac.mrt.cse.cs4262.server.leaderElector.state.LeaderElectorState;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 
 public class LeaderElector {
-    
-    private static final Logger log = LoggerFactory.getLogger(LeaderElector.class);
-    
+        
     private static LeaderElector instance = null;
     private static final Object leaderElectorStateLock = new Object();
 

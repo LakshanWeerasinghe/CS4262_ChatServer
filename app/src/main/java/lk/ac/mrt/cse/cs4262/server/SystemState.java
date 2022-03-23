@@ -1,7 +1,6 @@
 package lk.ac.mrt.cse.cs4262.server;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 
@@ -12,7 +11,6 @@ public class SystemState {
 
     private String leader;
     private Map<String, ServerConfigObj> systemConfigMap;
-    private AtomicBoolean isLeaderElected = new AtomicBoolean(true);
     
     private SystemState(){
         this.leader = null;
@@ -71,11 +69,4 @@ public class SystemState {
         return -1;
     }
    
-    public boolean isLeaderElected(){
-        return isLeaderElected.get();
-    }
-
-    public void updateLeaderElectionStatus(boolean value){
-        isLeaderElected.set(value);
-    }
 }

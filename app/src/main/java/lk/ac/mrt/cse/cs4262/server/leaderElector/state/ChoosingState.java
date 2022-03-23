@@ -22,10 +22,6 @@ public class ChoosingState extends LeaderElectorState{
     private ServerConfigObj highestPriorityServer = null;
     private String nominationMsg;
 
-    private final Integer TIME_INTERVAL_T3 = 8000;
-
-
-
     public ChoosingState(LeaderElector leaderElector) {
         super(leaderElector);
         buildNominationMsg();
@@ -37,23 +33,30 @@ public class ChoosingState extends LeaderElectorState{
         nominationMsg = Util.getJsonString(nominationMsgMap);
     }
 
-    private void findHighestPriorityServer(){
-        for (String key : getLeaderElector().getElectionAnswerMap().keySet()) {
-            if(getLeaderElector().getElectionAnswerMap().get(key)){
-                ServerConfigObj serverConfig = SystemState.getInstance().getServerConfig(key);
-                if(highestPriorityServer == null){
-                    highestPriorityServer = serverConfig;
-                    continue;
-                }
-                if(serverConfig.getPriority() > highestPriorityServer.getPriority()){
-                    highestPriorityServer = serverConfig;
+    private void findHighestPriorityServer(LeaderElectionHandler owner) throws InterruptedException{
+        if(getLeaderElector().getElectionAnswerMap().keySet().size() > 0){
+            for (String key : getLeaderElector().getElectionAnswerMap().keySet()) {
+                if(getLeaderElector().getElectionAnswerMap().get(key)){
+                    ServerConfigObj serverConfig = SystemState.getInstance().getServerConfig(key);
+                    if(highestPriorityServer == null){
+                        highestPriorityServer = serverConfig;
+                        continue;
+                    }
+                    if(serverConfig.getPriority() > highestPriorityServer.getPriority()){
+                        highestPriorityServer = serverConfig;
+                    }
                 }
             }
+            getLeaderElector().getElectionAnswerMap().remove(highestPriorityServer.getName());
         }
-        getLeaderElector().getElectionAnswerMap().remove(highestPriorityServer.getName());
+        else{
+            highestPriorityServer = null;
+            dispatchEvent(EventConstants.T3_EXPIRED, owner);
+        }
+        
     }
 
-    private void sendNominationMessage(LeaderElectionHandler owner){
+    private void sendNominationMessage(LeaderElectionHandler owner) throws InterruptedException{
         try {
             CoordinatorConnector nominationConnector = 
                 new CoordinatorConnector(highestPriorityServer.getHostIp(), 
@@ -61,30 +64,27 @@ public class ChoosingState extends LeaderElectorState{
                 .createOutputBuffer()
                 .createInputBuffer();
                 nominationConnector.sendMessage(nominationMsg);
-                Thread.sleep(TIME_INTERVAL_T3);
+                Thread.sleep(EventConstants.TIME_INTERVAL_T3);
                 Map<String, Object> answer =  nominationConnector.handleMessage(); // handle coodiator Message
                 nominationConnector.close();
-                if(answer.containsKey("coordinator")){
+                if(answer != null && answer.containsKey("coordinator")){
                     owner.setCoordinatingServerName(highestPriorityServer.getName());
                     dispatchEvent(EventConstants.RECEIVE_COORDINATOR, owner);
                 }
                 else{
                     highestPriorityServer = null;
-                    findHighestPriorityServer();
+                    findHighestPriorityServer(owner);
                     if(highestPriorityServer != null){
                         sendNominationMessage(owner);
                     }else{
-                        dispatchEvent(EventConstants.T3_EXPIRED, owner);
+                        dispatchEvent(EventConstants.SEND_NOMINATION, owner);
                     }
                 }
 
         } catch (IOException e) {
             log.error("error sending nomination msg to server {}", highestPriorityServer.getName());
             log.error("error is {}", e.getMessage());
-        }
-        catch (InterruptedException e){
-            log.error("error nomination sending thread interupted");
-            log.error("error is {}", e.getMessage());
+            dispatchEvent(EventConstants.SEND_NOMINATION, owner);
         }
     }
 
@@ -107,7 +107,7 @@ public class ChoosingState extends LeaderElectorState{
                 break;
 
             case EventConstants.SEND_NOMINATION:
-                findHighestPriorityServer();
+                findHighestPriorityServer(owner);
                 sendNominationMessage(owner);
                 break;
                 

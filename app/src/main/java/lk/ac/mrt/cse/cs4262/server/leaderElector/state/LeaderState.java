@@ -34,11 +34,6 @@ public class LeaderState extends LeaderElectorState{
         coordinatorMsg = Util.getJsonString(coordinatorMsgMap);
     }
 
-    private void updateLeader(LeaderElectionHandler owner){
-        SystemState.getInstance().setLeader(owner.getCoordinatingServerName());
-        SystemState.getInstance().updateLeaderElectionStatus(true);
-    }
-
     private void sendCoordinatorMsg(){
         SystemState.getInstance().getSystemConfigMap().values().forEach(
             x -> {
@@ -72,7 +67,7 @@ public class LeaderState extends LeaderElectorState{
                 break;
             
             case EventConstants.SEND_COORDINATOR:
-                updateLeader(owner);
+                SystemState.getInstance().setLeader(owner.getCoordinatingServerName());
                 sendCoordinatorMsg();
                 HeartbeatMonitor.getInstance().startHeartbeatMonitor(Server.getInstance().getServerName());
                 break;

@@ -101,6 +101,7 @@ public class CoordinatorConnector implements Runnable{
                     JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
         
                     String messageType = jsonObject.get("type").getAsString();
+                    log.info("recived message {} from {}", jsonObject, connectingServerName);
         
                     Map<String, Object> map = new HashMap<>();
                     switch (messageType) {

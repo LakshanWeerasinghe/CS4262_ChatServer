@@ -33,16 +33,7 @@ public class Application {
         String configFilePath = args[1];
         String mainHallName = "MainHall-" + serverName;
         Map<String, ServerConfigObj> serverConfigMap = null;
-        Properties properties = null;
-
-        try {
-            properties = ConfigUtil.loadProperties();
-        } catch (IOException e) {
-            log.error("error occred while loading properties file");
-            log.error("error is {}", e.getMessage());
-            System.exit(1);
-        }
-
+        
         try {
             serverConfigMap = ConfigUtil.loadSystemConfig(configFilePath, serverName);
         } catch (FileNotFoundException e) {
@@ -56,9 +47,7 @@ public class Application {
                             .createClientHandlerServerSocket(serverConfigMap.get(serverName).getClientPort());
 
         serverConfigMap.get(serverName).setIsServerActive(true);
-        SystemState systemState = SystemState.getInstance();
-        systemState.setLeader(properties.getProperty("leader"));
-        systemState.setSystemConfigMap(serverConfigMap);
+        SystemState.getInstance().setSystemConfigMap(serverConfigMap);
 
         LeaderElector.getInstance(serverName);
 
@@ -69,6 +58,8 @@ public class Application {
                                         MainHall.getInstance(mainHallName, null)));
 
         server.startListenOnCoordinatorSocket();
+
+        
 
         ServerConfigObj leaderServerConfig =  null;
 
@@ -84,6 +75,8 @@ public class Application {
             }
         }
         server.waitForAllServersToStart();
+
+        SystemState.getInstance().setLeader(leaderServerConfig.getName());
 
         if(leaderServerConfig.getName().equals(serverName)){
             LeaderElector.getInstance().setLeaderElectorState(new LeaderState(LeaderElector.getInstance()), null);

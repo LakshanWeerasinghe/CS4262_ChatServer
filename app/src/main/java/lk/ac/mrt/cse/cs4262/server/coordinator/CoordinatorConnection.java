@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
 import lk.ac.mrt.cse.cs4262.server.Store;
-import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.heartbeat.HeartbeatMonitor;
 import lk.ac.mrt.cse.cs4262.server.leader.LeaderRoomHandler;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
@@ -137,7 +136,6 @@ public class CoordinatorConnection implements Runnable{
                             map.put("type", "answer");
                             send(Util.getJsonString(map));
                             HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
-                            SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
                             new LeaderElectionHandler(EventConstants.RECEIVE_ELECTION, null).start();
@@ -145,7 +143,6 @@ public class CoordinatorConnection implements Runnable{
                         
                         case "nomination":
                             HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
-                            SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
                             new LeaderElectionHandler(EventConstants.RECEIVE_NOMINATION, null).start();
@@ -153,7 +150,6 @@ public class CoordinatorConnection implements Runnable{
                         
                         case "coordinator":
                             HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
-                            SystemState.getInstance().updateLeaderElectionStatus(false);
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
                             String leaderServerName = jsonObject.get("value").getAsString();
