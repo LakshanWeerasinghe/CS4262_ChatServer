@@ -1,7 +1,6 @@
 package lk.ac.mrt.cse.cs4262.server.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +15,7 @@ public class ConfigUtil {
     
     public static Properties loadProperties() throws IOException{
         Properties props = new Properties();
-        InputStream ins = new FileInputStream("src/main/resources/application.properties");
+        InputStream ins = ClassLoader.getSystemResourceAsStream("application.properties");
         props.load(ins);
         ins.close();
         return props;

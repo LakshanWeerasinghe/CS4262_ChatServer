@@ -25,3 +25,8 @@ check the IPv4 Address by using `ipconfig` command.
 ```
 java -jar .\client.jar -h 143.198.68.88 -p 6000 -i <username>
 ```
+
+### Build a jar
+```
+gradle fatJar
+```
