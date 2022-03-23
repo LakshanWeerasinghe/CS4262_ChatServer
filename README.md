@@ -6,25 +6,18 @@ Make sure you have gradle on your machine. Original project initializing version
 
 ### Run Project
 
+
+Initial running
 ``` 
-./gradlew run --args="s1 D:\projects\semester_8\distributed_systems\CS4262_ChatServer\sample_config"
+./gradlew run --args="<server-id> <config-location>"
 ```
 
-### Run client application
-
-check the IPv4 Address by using `ipconfig` command.
-
-```
-java -jar .\client.jar -h <IPv4 Address> -p 6000 -i lucifer
+Initial running after failuer 
+``` 
+./gradlew run --args="<server-id> <config-location> 1"
 ```
 
-### Connect to chat server
 
-check the IPv4 Address by using `ipconfig` command.
-
-```
-java -jar .\client.jar -h 143.198.68.88 -p 6000 -i <username>
-```
 
 ### Build a jar
 ```
