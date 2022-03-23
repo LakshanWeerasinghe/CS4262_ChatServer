@@ -25,7 +25,7 @@ public class LeaderElectionHandler extends Thread{
                                 .getLeaderElectorState()
                                 .dispatchEvent(event, this);
             } catch (InterruptedException e) {
-                log.error("thread interupted executing initial event {}", event);
+                log.error("thread {} interupted executing initial event {}", currentThread.getId(), event);
             }
             break;
         }

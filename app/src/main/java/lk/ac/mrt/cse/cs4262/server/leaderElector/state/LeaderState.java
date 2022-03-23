@@ -38,6 +38,7 @@ public class LeaderState extends LeaderElectorState{
         SystemState.getInstance().getSystemConfigMap().values().forEach(
             x -> {
                 if(x.getPriority() < getLeaderElector().getMyConfig().getPriority()){
+                    log.info("send coordinator message for server {}", x.getName());
                     try {
                         CoordinatorConnector lowPriorityServerConnector = 
                             new CoordinatorConnector(x.getHostIp(), x.getCoordinatorPort())

@@ -134,4 +134,8 @@ public class Store {
             }
         }
     }
+
+    public void removeFaildServerDetails(String failedServerName){
+        // remove room details
+    }
 }

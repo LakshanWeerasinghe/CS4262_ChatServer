@@ -296,9 +296,7 @@ public class HeartbeatMonitor {
                             SystemState.getInstance().getSystemConfigMap()
                                 .get(SystemState.getInstance().getLeader()).setIsServerActive(false);
                             SystemState.getInstance().setLeader(null);
-                            LeaderElectionHandler leaderElectionHandler = 
-                                    new LeaderElectionHandler(EventConstants.T1_EXPIRED, null);
-                            leaderElectionHandler.start();
+                            new LeaderElectionHandler(EventConstants.T1_EXPIRED, null).start();
                         }
                     }
                     interuptSubordinateHeartBeatMonitorThread();

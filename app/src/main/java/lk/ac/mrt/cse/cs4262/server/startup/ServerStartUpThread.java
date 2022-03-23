@@ -3,14 +3,9 @@ package lk.ac.mrt.cse.cs4262.server.startup;
 import java.io.IOException;
 import java.net.Socket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 
 public class ServerStartUpThread implements Runnable{
-
-    private static final Logger log = LoggerFactory.getLogger(ServerStartUpThread.class);
 
     private final ServerConfigObj serverConfigObj;
 

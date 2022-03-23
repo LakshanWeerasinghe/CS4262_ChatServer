@@ -31,6 +31,10 @@ public class NotLeaderState extends LeaderElectorState{
                 getLeaderElector().getLeaderElectorState().dispatchEvent(EventConstants.START, owner);
                 break;
 
+            case EventConstants.RECOVER_AS_NOT_LEADER:
+                HeartbeatMonitor.getInstance().startHeartbeatMonitor(Server.getInstance().getServerName());
+                break;
+
             default:
                 break;
             

@@ -6,11 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.slf4j.Logger;
@@ -131,7 +134,9 @@ public class CoordinatorConnector implements Runnable{
                             break;
 
                         case "view":
-                            List<String> liveServerNames = (List<String>) jsonObject.get("live_servers");
+                            JsonArray liverServersJsonArray = jsonObject.getAsJsonArray("liveServerNames");
+                            List<String> liveServerNames = new ArrayList<>();
+                            for (JsonElement e : liverServersJsonArray) liveServerNames.add(e.getAsString());
                             map.put("liveServerNames", liveServerNames);
                             break;
                        

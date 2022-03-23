@@ -130,6 +130,10 @@ public class CoordinatorConnection implements Runnable{
                             List<String> failed = new ArrayList<>();
                             for (JsonElement e : jArray) failed.add(e.getAsString());
                             HeartbeatMonitor.getInstance().updateFailedServers(failed);
+                            for (String failedServerName : failed) {
+                                Store.getInstance().removeFaildServerDetails(failedServerName);
+                            }
+
                             break;
 
                         case "election":
@@ -197,7 +201,13 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "iamup":
-                            // send view messages
+                            String recoveredServerName = jsonObject.get("serverid").getAsString();
+                            List<String> activeServerNames = SystemState.getInstance().getActiveServerNameList();
+                            map.put("type", "view");
+                            map.put("liveServerNames", activeServerNames);
+                            send(Util.getJsonString(map));
+                            SystemState.getInstance().getSystemConfigMap()
+                                .get(recoveredServerName).setIsServerActive(true);
                             break;
 
                         default:
