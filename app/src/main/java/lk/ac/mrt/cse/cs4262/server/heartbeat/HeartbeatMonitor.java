@@ -208,7 +208,6 @@ public class HeartbeatMonitor {
     }
 
     public void acknowledge(String serverName) {
-        System.out.println("acknowledge " + serverName);
         synchronized (checkerLock) {
             if (LeaderElector.getInstance().getLeaderElectorState() instanceof LeaderState) {
                 checkers.get(serverName).setValue(true);
@@ -311,13 +310,12 @@ public class HeartbeatMonitor {
 
     public void executeMonitor() {
         if (LeaderElector.getInstance().getLeaderElectorState() instanceof NotLeaderState){
-            System.out.println("execute");
             executeSubordinateHeartbeat();
         }
     }
 
     public void updateFailedServers(List<String> failedList) {
-        System.out.println("failure update");
+        log.info("failure update");
         for (String f : failedList) {
             SystemState.getInstance().getSystemConfigMap().get(f)
                     .setIsServerActive(false);

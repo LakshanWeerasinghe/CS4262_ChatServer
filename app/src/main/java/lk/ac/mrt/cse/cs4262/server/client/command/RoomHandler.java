@@ -34,8 +34,8 @@ public class RoomHandler {
 
     public static Room handleCreateRoom(String roomID, Client client) {
         Room room = null;
-        // do only if all servers are live
-        if (checkValidity(roomID) && SystemState.getInstance().allServerActive()) {
+        // validate room ID
+        if (checkValidity(roomID)) {
             // first assume roomID exists
             boolean roomIDExists = true;
             // then check if roomID actually exist locally
