@@ -60,18 +60,23 @@ public class StartUpState extends LeaderElectorState{
     public void dispatchEvent(String event, LeaderElectionHandler owner) throws InterruptedException {
         switch(event){
             case EventConstants.START:
-            log.info("{}", EventConstants.START);
                 sendElectionMessages();
-                Thread.sleep(EventConstants.TIME_INTERVAL_T2);
-                if(getLeaderElector().isNoOneAnswered()){
+                if(getLeaderElector().getElectionAnswerMap().values().size() == 0){
                     owner.setCoordinatingServerName(getLeaderElector().getMyConfig().getName());
-                    log.info("{}", EventConstants.T2_EXPIRED);
                     dispatchEvent(EventConstants.T2_EXPIRED, owner);
-                }else{
-                    dispatchEvent(EventConstants.RECEIVE_ANSWER, owner);
                 }
-                if(getLeaderElector().getLeaderElectorState() instanceof StartUpState){
-                    dispatchEvent(EventConstants.START, owner);
+                else{
+                    Thread.sleep(EventConstants.TIME_INTERVAL_T2);
+                    if(getLeaderElector().isNoOneAnswered()){
+                        owner.setCoordinatingServerName(getLeaderElector().getMyConfig().getName());
+                        log.info("{}", EventConstants.T2_EXPIRED);
+                        dispatchEvent(EventConstants.T2_EXPIRED, owner);
+                    }else{
+                        dispatchEvent(EventConstants.RECEIVE_ANSWER, owner);
+                    }
+                    if(getLeaderElector().getLeaderElectorState() instanceof StartUpState){
+                        dispatchEvent(EventConstants.START, owner);
+                    }
                 }
                 break;
 

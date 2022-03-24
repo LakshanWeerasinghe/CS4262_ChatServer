@@ -32,6 +32,8 @@ public class LeaderElectionHandler extends Thread{
     }
 
     public synchronized void stopThread(){
+        log.error("start thread {} interupted by thread {} executing initial event {}", currentThread.getId(), 
+                    Thread.currentThread().getId(), event);
         currentThread.interrupt();
     }
 

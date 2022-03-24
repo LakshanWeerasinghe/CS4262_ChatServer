@@ -270,10 +270,14 @@ public class HeartbeatMonitor {
                                         SystemState.getInstance().getLeaderConfig().getName());
                             log.error("error is {}", e.getMessage());
                         }
+
+                        log.info("checking message sending finished");
+
                         // wait for the leader to reply
                         timeTick = 0;
                         shouldWait = true;
                         while (timeTick < MAX_TIMEOUT) {
+                            log.info("wait until leader to reply");
                             synchronized (checkerLock) {
                                 shouldWait = !isLeaderActive;
                             }

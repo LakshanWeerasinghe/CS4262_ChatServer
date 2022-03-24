@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,8 +46,9 @@ public class RecoverState extends LeaderElectorState{
                                     map.put("serverid", Server.getInstance().getServerName());
                                     serverConnector.sendMessage(Util.getJsonString(map));
     
-                                    List<String> liveServerNameList = (List<String>) serverConnector
-                                                                        .handleMessage().get("liveServerNames");
+                                    Object obj =  serverConnector.handleMessage().get("liveServerNames");
+                                    List<String> liveServerNameList = (List<String>) obj;
+
                                     liveServerNames.addAll(liveServerNameList);
                                 } catch (IOException e) {
                                     log.error("error sending iamup msg to server {}", x.getName());
