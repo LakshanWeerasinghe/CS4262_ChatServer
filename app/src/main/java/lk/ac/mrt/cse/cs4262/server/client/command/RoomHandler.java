@@ -90,17 +90,17 @@ public class RoomHandler {
         Map<String, String> allRooms = Store.getInstance().getAllRooms();
         Set<String> allRoomsNamesSet = new HashSet<>(allRooms.keySet());
 
-        // adding MainHall rooms of live servers
+        // remove mainhall rooms of failed servers
         List<ServerConfigObj> serverConfigurations = new ArrayList<ServerConfigObj>(
                 SystemState.getInstance().getSystemConfigMap().values());
-        List<String> liveServerNames = new ArrayList<String>();
+        List<String> FailedServerNames = new ArrayList<String>();
         for (ServerConfigObj serverConfigObj : serverConfigurations) {
-            if (serverConfigObj.getIsServerActive() == true) {
-                liveServerNames.add(serverConfigObj.getName());
+            if (serverConfigObj.getIsServerActive() == false) {
+                FailedServerNames.add(serverConfigObj.getName());
             }
         }
-        for (String serverName : liveServerNames) {
-            allRoomsNamesSet.add("MainHall-" + serverName);
+        for (String serverName : FailedServerNames) {
+            allRoomsNamesSet.remove("MainHall-" + serverName);
         }
         return new ArrayList<String>(allRoomsNamesSet);
     }
