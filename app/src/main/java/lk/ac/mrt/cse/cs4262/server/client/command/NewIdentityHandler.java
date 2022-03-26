@@ -31,7 +31,7 @@ public class NewIdentityHandler {
             map.put("approved", "false");
         } else {
             // check whether the identity exists in the local or tmp client lists
-            if(store.clientIdentityExist(identity)){
+            if(store.clientIdentityExistAndAddToTmp(identity)){
                 map.put("approved", "false");
             }
             else{

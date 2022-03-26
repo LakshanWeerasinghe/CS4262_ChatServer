@@ -29,6 +29,7 @@ import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.LeaderElectionHandler;
 import lk.ac.mrt.cse.cs4262.server.util.Util;
 
+
 public class CoordinatorConnection implements Runnable{
     
     private static final Logger log = LoggerFactory.getLogger(CoordinatorConnection.class);
@@ -68,29 +69,27 @@ public class CoordinatorConnection implements Runnable{
 
     @Override
     public void run() {
-        boolean done = false;
         try {
             while (!this.coordinatorSocket.isClosed()) {
                 String bufferedMessage = this.coordinatorInputBuffer.readLine();
                 
-
                 if (this.gson == null) {
                     this.gson = new Gson();
                 }
 
                 if (bufferedMessage != null) {
-                    JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
+                    JsonObject recievedMessage = this.gson.fromJson(bufferedMessage, JsonObject.class);
 
-                    String messageType = jsonObject.get("type").getAsString();
-                    log.info("recived message {} from server with ip {} on {}", jsonObject, 
+                    log.info("recived message {} from a coordinator server with ip {} and {}", recievedMessage, 
                                 coordinatorSocket.getRemoteSocketAddress(), coordinatorSocket.getPort());
 
+                    String messageType = recievedMessage.get("type").getAsString();
                     Map<String, Object> map = new HashMap<>();
                     String roomID, serverName, identity;
                     switch (messageType) {
                         case "checkroomexist":
-                            roomID = jsonObject.get("roomid").getAsString();
-                            serverName = jsonObject.get("serverid").getAsString();
+                            roomID = recievedMessage.get("roomid").getAsString();
+                            serverName = recievedMessage.get("serverid").getAsString();
                             boolean roomIDExists = LeaderRoomHandler.getInstance().
                                 handleCreateRoom(roomID, serverName);
                             
@@ -101,21 +100,19 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "createroomack":
-                            boolean created = jsonObject.get("created").getAsBoolean();
+                            boolean created = recievedMessage.get("created").getAsBoolean();
                             if (created) {
-                                roomID = jsonObject.get("roomid").getAsString();
-                                serverName = jsonObject.get("serverid").getAsString();
+                                roomID = recievedMessage.get("roomid").getAsString();
+                                serverName = recievedMessage.get("serverid").getAsString();
                                 LeaderRoomHandler.getInstance().
                                     informAboutNewRoom(roomID, serverName);
                             }
-                            coordinatorSocket.close();
                             break;
 
                         case "roomcreate":
-                            roomID = jsonObject.get("roomid").getAsString();
-                            serverName = jsonObject.get("serverid").getAsString();
+                            roomID = recievedMessage.get("roomid").getAsString();
+                            serverName = recievedMessage.get("serverid").getAsString();
                             Store.getInstance().addRoom(roomID, serverName);
-                            coordinatorSocket.close();
                             break;
 
                         case "heartbeatcheck":
@@ -126,14 +123,13 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "failurenotice":
-                            JsonArray jArray = jsonObject.getAsJsonArray("failed");
+                            JsonArray jArray = recievedMessage.getAsJsonArray("failed");
                             List<String> failed = new ArrayList<>();
                             for (JsonElement e : jArray) failed.add(e.getAsString());
                             HeartbeatMonitor.getInstance().updateFailedServers(failed);
                             for (String failedServerName : failed) {
                                 Store.getInstance().removeFaildServerDetails(failedServerName);
                             }
-
                             break;
 
                         case "election":
@@ -156,23 +152,24 @@ public class CoordinatorConnection implements Runnable{
                             HeartbeatMonitor.getInstance().interuptSubordinateHeartBeatMonitorThread();
                             SystemState.getInstance().setLeader(null);
                             HeartbeatMonitor.getInstance().setSubordinateStarted(false);
-                            String leaderServerName = jsonObject.get("value").getAsString();
+                            String leaderServerName = recievedMessage.get("value").getAsString();
                             new LeaderElectionHandler(EventConstants.RECEIVE_COORDINATOR, leaderServerName).start();
                             break;
 
                         case "checkidentityexist":
-                            identity = jsonObject.get("identity").getAsString();
-                            serverName = jsonObject.get("serverid").getAsString();
+                            identity = recievedMessage.get("identity").getAsString();
+                            serverName = recievedMessage.get("serverid").getAsString();
                             map.put("type", "identityexist");
                             map.put("identity", identity);
                             // check for the identity in local and tmp client lists
-                            if(Store.getInstance().clientIdentityExist(identity)){
+                            if(Store.getInstance().clientIdentityExistAndAddToTmp(identity)){
                                 map.put("exist", "true");
                             } else {
                                 SystemState s = SystemState.getInstance();
                                 if (myServerName.equals(s.getLeader())) {
                                     // if you are the leader, ask from other servers for the identity
-                                    Boolean identityExist = LeaderIndentityHandler.getInstance().askIndentityExist(identity, serverName);
+                                    Boolean identityExist = LeaderIndentityHandler.getInstance()
+                                                                .askIndentityExist(identity, serverName);
                                     if(identityExist) {
                                         map.put("exist", "true");
                                     } else {
@@ -189,8 +186,8 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "deleteroom":
-                            String deleteRoomId = jsonObject.get("roomid").getAsString();
-                            String serverId = jsonObject.get("serverid").getAsString();
+                            String deleteRoomId = recievedMessage.get("roomid").getAsString();
+                            String serverId = recievedMessage.get("serverid").getAsString();
                             // deletes the room from its room list
                             Store.getInstance().deleteRoomIDFromAllAndManaged(deleteRoomId);
 
@@ -201,20 +198,19 @@ public class CoordinatorConnection implements Runnable{
                             break;
 
                         case "iamup":
-                            String recoveredServerName = jsonObject.get("serverid").getAsString();
+                            String recoveredServerName = recievedMessage.get("serverid").getAsString();
                             List<String> activeServerNames = SystemState.getInstance().getActiveServerNameList();
                             map.put("type", "view");
                             map.put("liveServerNames", activeServerNames);
                             send(Util.getJsonString(map));
                             SystemState.getInstance().getSystemConfigMap()
                                 .get(recoveredServerName).setIsServerActive(true);
+                            HeartbeatMonitor.getInstance().updateChecker(recoveredServerName);
                             break;
 
                         default:
                             break;
                     }
-                    done = true;
-
                 }
             }
         } catch (SocketException e) {
@@ -224,18 +220,19 @@ public class CoordinatorConnection implements Runnable{
             log.error("error is {}", e.getMessage());
         }finally{
             try {
-                if (!done) coordinatorSocket.close();
+                coordinatorSocket.close();
             } catch (IOException e) {
+                log.error("error occored while closing coordinator socket");
                 log.error("error is {}", e.getMessage());
             }
         }
     }
 
-
-    public void send(String value) {
-        log.info("send a message to coordinator message is {}", value);
+    public void send(String message) {
+        log.info("send a message {} to coordinator on ip {} and port {}", message, 
+                coordinatorSocket.getRemoteSocketAddress(), coordinatorSocket.getPort());
         try {
-            coordinatorOutputBuffer.write((value + "\n").getBytes("UTF-8"));
+            coordinatorOutputBuffer.write((message + "\n").getBytes("UTF-8"));
             coordinatorOutputBuffer.flush();
         } catch (IOException e) {
            log.error("error occred while sending the message");

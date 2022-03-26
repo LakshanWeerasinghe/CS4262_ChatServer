@@ -74,10 +74,10 @@ public class CoordinatorConnector implements Runnable{
     }
     
 
-    public void sendMessage(String value) {
-        log.info("send a message to coordinator message is {}", value);
+    public void sendMessage(String message) {
+        log.info("send a message {} to coordinator", message);
         try {
-            coordinatorOutputBuffer.write((value + "\n").getBytes("UTF-8"));
+            coordinatorOutputBuffer.write((message + "\n").getBytes("UTF-8"));
             coordinatorOutputBuffer.flush();
         } catch (IOException e) {
            log.error("error occred while sending the message");
@@ -88,12 +88,11 @@ public class CoordinatorConnector implements Runnable{
   
     @Override
     public void run() {
-        log.info("start to listen for coordinator connections");
+        log.info("start to listen for coordinator messages");
         handleMessage();
     }
 
     public Map<String, Object> handleMessage(){
-        boolean done = false;
         try {
             while (!this.socket.isClosed()) {
                 String bufferedMessage = CoordinatorConnector.this.coordinatorInputBuffer.readLine();
@@ -117,7 +116,6 @@ public class CoordinatorConnector implements Runnable{
                         case "heartbeatsuccess":
                             String serverName = jsonObject.get("serverid").getAsString();
                             HeartbeatMonitor.getInstance().acknowledge(serverName);
-                            socket.close();
                             break;
 
                         case "coordinator":
@@ -143,7 +141,7 @@ public class CoordinatorConnector implements Runnable{
                         default:
                             break;
                     }
-                    done = true;
+                    close();
                     return map;
                 }
             }
@@ -153,11 +151,7 @@ public class CoordinatorConnector implements Runnable{
         } catch (IOException e) {
             log.error("error is {}", e.getMessage());
         }finally{
-            try {
-                if (!done) socket.close();
-            } catch (IOException e) {
-                log.error("error is {}", e.getMessage());
-            }
+            close();
         }
         return null;
     }
@@ -179,6 +173,5 @@ public class CoordinatorConnector implements Runnable{
         this.connectingServerName = connectingServerName;
         return this;
     }
-
     
 }

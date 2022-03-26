@@ -2,9 +2,6 @@ package lk.ac.mrt.cse.cs4262.server.leaderElector;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.state.LeaderElectorState;
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;

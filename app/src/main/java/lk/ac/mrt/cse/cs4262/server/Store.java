@@ -36,7 +36,7 @@ public class Store {
         return instance;
     }
 
-    public boolean clientIdentityExist(String identity){
+    public boolean clientIdentityExistAndAddToTmp(String identity){
         synchronized(localClientsLock){
             if(localClients.contains(identity) || localTmpClients.contains(identity)){
                 return true;

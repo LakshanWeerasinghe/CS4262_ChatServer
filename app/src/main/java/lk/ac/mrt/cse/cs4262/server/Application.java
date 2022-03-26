@@ -77,6 +77,7 @@ public class Application {
                 new Thread(new ServerStartUpThread(serverConfigMap.get(otherServerName))).start();
             }
         }
+        
         if(isARecoveredSystem){
             LeaderElector.getInstance().setLeaderElectorState(new RecoverState(LeaderElector.getInstance()), null);
             LeaderElectionHandler leaderElectionHandler = 
@@ -109,8 +110,7 @@ public class Application {
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error("main thread got interupted");
             }
         }
     }
