@@ -46,10 +46,12 @@ public class RecoverState extends LeaderElectorState{
                                     map.put("serverid", Server.getInstance().getServerName());
                                     serverConnector.sendMessage(Util.getJsonString(map));
     
-                                    Object obj =  serverConnector.handleMessage().get("liveServerNames");
-                                    List<String> liveServerNameList = (List<String>) obj;
-
-                                    liveServerNames.addAll(liveServerNameList);
+                                    List<?> liveServerNameList = (List<?>) serverConnector
+                                                                                .handleMessage()
+                                                                                .get("liveServerNames");
+                                    
+                                    liveServerNameList.forEach(x -> liveServerNames.add((String)x));
+                                    
                                 } catch (IOException e) {
                                     log.error("error sending iamup msg to server {}", x.getName());
                                     log.error("error is {}", e.getMessage());

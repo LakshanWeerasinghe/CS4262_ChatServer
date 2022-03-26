@@ -2,26 +2,18 @@ package lk.ac.mrt.cse.cs4262.server.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Scanner;
+
 
 import lk.ac.mrt.cse.cs4262.server.objects.ServerConfigObj;
 
 public class ConfigUtil {
-    
-    public static Properties loadProperties() throws IOException{
-        Properties props = new Properties();
-        InputStream ins = ClassLoader.getSystemResourceAsStream("application.properties");
-        props.load(ins);
-        ins.close();
-        return props;
-    }
 
-    public static Map<String, ServerConfigObj> loadSystemConfig(String fileName, String serverName) throws FileNotFoundException{
+    
+    public static Map<String, ServerConfigObj> loadSystemConfig(String fileName, String serverName)
+             throws FileNotFoundException{
         Map<String, ServerConfigObj> map = new HashMap<>();
         File file = new File(fileName);
         Scanner myReader = new Scanner(file);
