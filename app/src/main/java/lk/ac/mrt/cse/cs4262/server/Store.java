@@ -1,9 +1,6 @@
 package lk.ac.mrt.cse.cs4262.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import lk.ac.mrt.cse.cs4262.server.chatRoom.Room;
 
@@ -136,6 +133,8 @@ public class Store {
     }
 
     public void removeFaildServerDetails(String failedServerName){
-        // remove room details
+        // remove rooms other than the mainhall of the failed server
+        allRooms.values().removeAll(Collections.singleton(failedServerName));
+        allRooms.put("MainHall-"+failedServerName, failedServerName);
     }
 }
