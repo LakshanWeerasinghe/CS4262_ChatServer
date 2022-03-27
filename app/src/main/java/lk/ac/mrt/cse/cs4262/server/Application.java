@@ -23,13 +23,14 @@ public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args){
-        log.info("application starting...");
 
         if(args.length < 2 || args.length > 3){
             log.error("need to pass two arguments <Server-Identifier> <Config-File-Path>");
             log.error("need to pass three arguments when recovering <Server-Identifier> <Config-File-Path> 1");
             System.exit(1);
         }
+
+        ConfigUtil.readResource("banner.txt").ifPresent(System.out::println);
 
         String serverName = args[0];
         String configFilePath = args[1];
