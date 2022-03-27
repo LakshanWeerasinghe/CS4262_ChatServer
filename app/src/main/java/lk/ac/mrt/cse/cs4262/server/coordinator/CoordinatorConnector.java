@@ -137,6 +137,7 @@ public class CoordinatorConnector implements Runnable{
                             List<String> liveServerNames = new ArrayList<>();
                             for (JsonElement e : liverServersJsonArray) liveServerNames.add(e.getAsString());
                             map.put("liveServerNames", liveServerNames);
+                            map.put("allRooms", allRoomsJsonObject);
                             break;
                        
                         default:
