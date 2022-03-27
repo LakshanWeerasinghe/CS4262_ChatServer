@@ -57,6 +57,7 @@ public class Client implements Runnable {
         this.connectedServer = server.getServerName();
         this.newIdentityHandler = server.getNewIdentityHandler();
         this.ownedRoom = "";
+        this.clientIdentifier = "";
     }
 
     @Override
@@ -74,7 +75,7 @@ public class Client implements Runnable {
                     JsonObject jsonObject = this.gson.fromJson(bufferedMessage, JsonObject.class);
 
                     String messageType = jsonObject.get("type").getAsString();
-                    System.out.println(jsonObject);
+                    log.info("received message {} from {}", jsonObject, clientIdentifier);
 
                     Map<String, Object> map = new HashMap<>();
                     switch (messageType) {
