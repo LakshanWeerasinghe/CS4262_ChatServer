@@ -135,9 +135,15 @@ public class CoordinatorConnector implements Runnable{
                             JsonArray liverServersJsonArray = jsonObject.getAsJsonArray("liveServerNames");
                             JsonObject allRoomsJsonObject = jsonObject.getAsJsonObject("allRooms");
                             List<String> liveServerNames = new ArrayList<>();
-                            for (JsonElement e : liverServersJsonArray) liveServerNames.add(e.getAsString());
+                            Map<String, String> allRoomsMap = new HashMap<>();
+                            for (JsonElement e : liverServersJsonArray) {
+                                liveServerNames.add(e.getAsString());
+                            }
+                            for (Map.Entry<String,JsonElement> entry : allRoomsJsonObject.entrySet()) {
+                                allRoomsMap.put(entry.getKey(), entry.getValue().getAsString());
+                            }
                             map.put("liveServerNames", liveServerNames);
-                            map.put("allRooms", allRoomsJsonObject);
+                            map.put("allRooms", allRoomsMap);
                             break;
                        
                         default:

@@ -55,7 +55,7 @@ public class RecoverState extends LeaderElectorState{
                                     liveServerNameList
                                             .forEach(x -> liveServerNames.add((String)x));
                                     globalRoomMap
-                                            .values()
+                                            .keySet()
                                             .forEach(x -> roomMap.put((String)x, (String)globalRoomMap.get(x)));
                                     
                                 } catch (IOException e) {
