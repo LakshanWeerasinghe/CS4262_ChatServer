@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
+import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
@@ -164,6 +165,7 @@ public class HeartbeatMonitor {
                                         failureExists = true;
                                         failedServers.add(serverName);
                                         checkers.remove(serverName);
+                                        Store.getInstance().removeFaildServerDetails(serverName);
                                     }
                                 }
                             }
@@ -312,14 +314,6 @@ public class HeartbeatMonitor {
     public void executeMonitor() {
         if (LeaderElector.getInstance().getLeaderElectorState() instanceof NotLeaderState){
             executeSubordinateHeartbeat();
-        }
-    }
-
-    public void updateFailedServers(List<String> failedList) {
-        log.info("failure update failedList {}", failedList);
-        for (String f : failedList) {
-            SystemState.getInstance().getSystemConfigMap().get(f)
-                    .setIsServerActive(false);
         }
     }
 

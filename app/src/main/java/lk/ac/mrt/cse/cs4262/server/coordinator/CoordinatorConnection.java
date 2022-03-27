@@ -126,8 +126,9 @@ public class CoordinatorConnection implements Runnable{
                             JsonArray jArray = recievedMessage.getAsJsonArray("failed");
                             List<String> failed = new ArrayList<>();
                             for (JsonElement e : jArray) failed.add(e.getAsString());
-                            HeartbeatMonitor.getInstance().updateFailedServers(failed);
                             for (String failedServerName : failed) {
+                                SystemState.getInstance().getSystemConfigMap().get(failedServerName)
+                                        .setIsServerActive(false);
                                 Store.getInstance().removeFaildServerDetails(failedServerName);
                             }
                             break;
