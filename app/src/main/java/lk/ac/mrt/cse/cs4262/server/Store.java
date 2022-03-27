@@ -137,4 +137,9 @@ public class Store {
         allRooms.values().removeAll(Collections.singleton(failedServerName));
         allRooms.put("MainHall-"+failedServerName, failedServerName);
     }
+
+    public void setAllRoomsList(Map<String, String> allRooms){
+        this.allRooms = allRooms;
+    }
+    
 }

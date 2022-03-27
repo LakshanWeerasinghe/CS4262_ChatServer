@@ -133,6 +133,7 @@ public class CoordinatorConnector implements Runnable{
 
                         case "view":
                             JsonArray liverServersJsonArray = jsonObject.getAsJsonArray("liveServerNames");
+                            JsonObject allRoomsJsonObject = jsonObject.getAsJsonObject("allRooms");
                             List<String> liveServerNames = new ArrayList<>();
                             for (JsonElement e : liverServersJsonArray) liveServerNames.add(e.getAsString());
                             map.put("liveServerNames", liveServerNames);

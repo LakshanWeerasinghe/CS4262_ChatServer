@@ -202,6 +202,7 @@ public class CoordinatorConnection implements Runnable{
                             List<String> activeServerNames = SystemState.getInstance().getActiveServerNameList();
                             map.put("type", "view");
                             map.put("liveServerNames", activeServerNames);
+                            map.put("allRooms", Store.getInstance().getAllRooms());
                             send(Util.getJsonString(map));
                             SystemState.getInstance().getSystemConfigMap()
                                 .get(recoveredServerName).setIsServerActive(true);

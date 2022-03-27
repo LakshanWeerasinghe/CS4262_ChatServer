@@ -1,6 +1,7 @@
 package lk.ac.mrt.cse.cs4262.server.leaderElector.state;
 
 import lk.ac.mrt.cse.cs4262.server.Server;
+import lk.ac.mrt.cse.cs4262.server.Store;
 import lk.ac.mrt.cse.cs4262.server.SystemState;
 import lk.ac.mrt.cse.cs4262.server.coordinator.CoordinatorConnector;
 import lk.ac.mrt.cse.cs4262.server.leaderElector.EventConstants;
@@ -22,6 +23,7 @@ public class RecoverState extends LeaderElectorState{
     private static final Logger log = LoggerFactory.getLogger(ChoosingState.class);
 
     private Set<String> liveServerNames = new HashSet<>();
+    private Map<String, String> roomMap = new HashMap<>();
     private Integer myPriority = -1;
     private Integer highestPriority = -1;
     private String highestPriorityServer;
@@ -46,11 +48,15 @@ public class RecoverState extends LeaderElectorState{
                                     map.put("serverid", Server.getInstance().getServerName());
                                     serverConnector.sendMessage(Util.getJsonString(map));
     
-                                    List<?> liveServerNameList = (List<?>) serverConnector
-                                                                                .handleMessage()
-                                                                                .get("liveServerNames");
-                                    
-                                    liveServerNameList.forEach(x -> liveServerNames.add((String)x));
+                                    Map<String, Object> viewMessage = serverConnector.handleMessage();
+                                    List<?> liveServerNameList = (List<?>) viewMessage.get("liveServerNames");
+                                    Map<?, ?> globalRoomMap = (Map<?, ?>)viewMessage.get("allRooms");
+
+                                    liveServerNameList
+                                            .forEach(x -> liveServerNames.add((String)x));
+                                    globalRoomMap
+                                            .values()
+                                            .forEach(x -> roomMap.put((String)x, (String)globalRoomMap.get(x)));
                                     
                                 } catch (IOException e) {
                                     log.error("error sending iamup msg to server {}", x.getName());
@@ -67,20 +73,21 @@ public class RecoverState extends LeaderElectorState{
             // no view messages received
             dispatchEvent(EventConstants.T2_EXPIRED, owner);
         } else {
-            handleViewMessages(liveServerNames, owner);
+            handleViewMessages(owner);
         }
     }
 
-    private void handleViewMessages(Set<String> currentLiveServers, LeaderElectionHandler owner) 
-                                                                                        throws InterruptedException {
+    private void handleViewMessages(LeaderElectionHandler owner) throws InterruptedException {
         
-        currentLiveServers.forEach(x -> {
-            SystemState.getInstance().getSystemConfigMap().get(x).setIsServerActive(true);
-            if(SystemState.getInstance().getSystemConfigMap().get(x).getPriority() > highestPriority){
-                highestPriority = SystemState.getInstance().getSystemConfigMap().get(x).getPriority();
-                highestPriorityServer = x;
-            }
-        });
+            liveServerNames
+                    .forEach(x -> {
+                        SystemState.getInstance().getSystemConfigMap().get(x).setIsServerActive(true);
+                        if(SystemState.getInstance().getSystemConfigMap().get(x).getPriority() > highestPriority){
+                            highestPriority = SystemState.getInstance().getSystemConfigMap().get(x).getPriority();
+                            highestPriorityServer = x;
+                        }
+                    });
+            Store.getInstance().setAllRoomsList(roomMap);
 
         if (highestPriority > myPriority) {
             // you are not the coordinator
