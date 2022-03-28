@@ -60,6 +60,11 @@ public class RoomHandler {
                         Boolean b = (Boolean) cc.handleMessage().get("exist");
                         roomIDExists = b.booleanValue();
 
+                        CoordinatorConnector cc1 = new CoordinatorConnector(
+                            s.getLeaderConfig().getHostIp(),
+                            s.getLeaderConfig().getCoordinatorPort(),
+                            true);
+
                         map.clear();
                         map.put("type", "createroomack");
 
@@ -72,7 +77,7 @@ public class RoomHandler {
                         } else {
                             map.put("created", false);
                         }
-                        cc.sendMessage(Util.getJsonString(map));
+                        cc1.sendMessage(Util.getJsonString(map));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
