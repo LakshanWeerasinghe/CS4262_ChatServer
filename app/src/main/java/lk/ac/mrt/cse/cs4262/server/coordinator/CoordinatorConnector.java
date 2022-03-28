@@ -149,7 +149,6 @@ public class CoordinatorConnector implements Runnable{
                         default:
                             break;
                     }
-                    close();
                     return map;
                 }
             }
